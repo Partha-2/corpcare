@@ -1,0 +1,5 @@
+target/
+.git/
+.vscode/
+*.md
+node_modules/

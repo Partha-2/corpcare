@@ -1,0 +1,54 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: corpcare-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: corpcare
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+    ports:
+      - "3307:3306"
+    volumes:
+      - corpcare-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: corpcare-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/corpcare?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM}
+      BOLNA_API_KEY: ${BOLNA_API_KEY}
+      BOLNA_API_URL: https://api.bolna.ai/call
+      BOLNA_AGENT_ID: ${BOLNA_AGENT_ID}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./corpcare-ui
+      dockerfile: Dockerfile
+    container_name: corpcare-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  corpcare-data:
