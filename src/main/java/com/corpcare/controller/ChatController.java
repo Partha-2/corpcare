@@ -1,6 +1,8 @@
 package com.corpcare.controller;
 
 import com.corpcare.dto.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +15,27 @@ import java.util.Map;
 @RequestMapping("/api/chat")
 public class ChatController {
 
+    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
+
     @Value("${groq.api.key}")
     private String groqApiKey;
 
+    @Value("${groq.model}")
+    private String groqModel;
+
     private final RestTemplate rest = new RestTemplate();
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, Object>>> status() {
+        String keyPreview = groqApiKey != null && groqApiKey.startsWith("gsk_")
+            ? groqApiKey.substring(0, 10) + "..."
+            : "not set";
+        return ResponseEntity.ok(ApiResponse.success("ok", Map.of(
+            "key", keyPreview,
+            "model", groqModel,
+            "configured", groqApiKey != null && !groqApiKey.isEmpty() && !groqApiKey.startsWith("${")
+        )));
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<String>> chat(@RequestBody Map<String, String> body) {
@@ -25,17 +44,23 @@ public class ChatController {
             return ResponseEntity.badRequest().body(ApiResponse.error("Message is required"));
         }
 
+        if (groqApiKey == null || groqApiKey.isEmpty() || groqApiKey.startsWith("${")) {
+            log.warn("Groq API key not configured");
+            return ResponseEntity.ok(ApiResponse.success("ok",
+                "The chatbot is not configured yet. Ask your admin to set the GROQ_API_KEY environment variable."));
+        }
+
         String prompt = """
-            You are CorpCare Assistant, a helpful support bot for CorpCare — a B2B corporate employee health management platform.
-            Answer the user's question concisely and helpfully based on what CorpCare does.
+            You are CorpCare Assistant for a B2B corporate employee health management platform.
+            Answer concisely and helpfully.
             
             CorpCare features:
-            - 4 portals: Admin (password-protected), Client (corporate HR), Hospital (partner hospitals), Employee (self-service)
-            - Employees log in with email + employee code
-            - Booking: employee picks hospital → sees available slots → books one → gets WhatsApp (Twilio) + voice call (Bolna.ai)
-            - Admins manage clients, hospitals, system-wide data
-            - Clients onboard employees, record vitals, book appointments
-            - Hospitals create slots with shifts (Morning 8-4, Evening 4-12, Night 12-8)
+            - 4 portals: Admin (password-protected), Client (corporate HR), Hospital (partner), Employee (self-service)
+            - Employee login: email + employee code
+            - Booking flow: employee picks hospital → sees available slots → books → WhatsApp (Twilio) + voice call (Bolna.ai)
+            - Admin manages clients, hospitals
+            - Client onboard employees, record vitals, book
+            - Hospitals create slots with shifts: Morning 8-4, Evening 4-12, Night 12-8
             - One slot = one booking. One employee = one active booking. Max 100 employees per client.
             - Vitals: height, weight, blood pressure, blood sugar, blood group
             
@@ -43,7 +68,7 @@ public class ChatController {
 
         try {
             Map<String, Object> requestBody = Map.of(
-                "model", "llama-3.3-70b-versatile",
+                "model", groqModel,
                 "messages", List.of(Map.of("role", "user", "content", prompt)),
                 "temperature", 0.7,
                 "max_tokens", 300
@@ -70,8 +95,15 @@ public class ChatController {
             }
 
             return ResponseEntity.ok(ApiResponse.success("ok", "I couldn't process that. Please try again."));
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            String respBody = e.getResponseBodyAsString();
+            log.error("Groq API error {}: {}", e.getStatusCode(), respBody);
+            return ResponseEntity.ok(ApiResponse.success("ok",
+                "⚠️ Groq API error (" + e.getStatusCode() + "). The model \"" + groqModel + "\" may not be available. Try setting a different model via GROQ_MODEL env var."));
         } catch (Exception e) {
-            return ResponseEntity.ok(ApiResponse.success("ok", "Sorry, I'm having trouble connecting. Please try again later."));
+            log.error("Groq chat failed", e);
+            return ResponseEntity.ok(ApiResponse.success("ok",
+                "Sorry, I'm having trouble connecting. Please try again later."));
         }
     }
 }
