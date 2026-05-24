@@ -30,6 +30,12 @@ public class AppointmentController {
                 .body(ApiResponse.success("Appointment booked successfully", appointment));
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<Appointment>>> getAllAppointments() {
+        List<Appointment> appointments = appointmentService.getAllAppointments();
+        return ResponseEntity.ok(ApiResponse.success("Appointments fetched", appointments));
+    }
+
     @GetMapping("/employee/{employeeId}")
     public ResponseEntity<ApiResponse<List<Appointment>>> getEmployeeAppointments(
             @PathVariable Long employeeId) {

@@ -7,6 +7,7 @@ import com.corpcare.exception.ResourceNotFoundException;
 import com.corpcare.repository.AppointmentSlotRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -26,8 +27,11 @@ public class AppointmentSlotService {
         return slotRepository.save(slot);
     }
 
-    public List<AppointmentSlot> getAvailableSlots(Long hospitalId) {
+    public List<AppointmentSlot> getAvailableSlots(Long hospitalId, LocalDate date) {
         hospitalService.getHospitalById(hospitalId);
+        if (date != null) {
+            return slotRepository.findByHospitalIdAndSlotDateAndIsBookedFalse(hospitalId, date);
+        }
         return slotRepository.findByHospitalIdAndIsBookedFalse(hospitalId);
     }
 

@@ -28,17 +28,65 @@
   --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -5px rgba(0,0,0,0.04);
   --shadow-xl: 0 20px 40px -10px rgba(0,0,0,0.1);
   --transition: 0.15s ease;
+  --bg: #f8fafc;
+  --card-bg: white;
+  --card-border: #e2e8f0;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --landing-bg: white;
+  --nav-bg: rgba(255,255,255,0.95);
+  --input-bg: white;
+  --table-hover: #f8fafc;
+  --table-stripe: #f8fafc;
+}
+
+body.dark {
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-light: #1e3a5f;
+  --primary-50: #172554;
+  --green: #34d399;
+  --green-light: #064e3b;
+  --red: #f87171;
+  --red-light: #450a0a;
+  --amber: #fbbf24;
+  --amber-light: #451a03;
+  --gray-50: #0f172a;
+  --gray-100: #1e293b;
+  --gray-200: #334155;
+  --gray-300: #475569;
+  --gray-400: #64748b;
+  --gray-500: #94a3b8;
+  --gray-600: #cbd5e1;
+  --gray-700: #e2e8f0;
+  --gray-800: #f1f5f9;
+  --gray-900: #f8fafc;
+  --bg: #020617;
+  --card-bg: #0f172a;
+  --card-border: #1e293b;
+  --text: #f8fafc;
+  --text-secondary: #94a3b8;
+  --landing-bg: #020617;
+  --nav-bg: rgba(15,23,42,0.95);
+  --input-bg: #1e293b;
+  --table-hover: #1e293b;
+  --table-stripe: #0f172a;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 10px 15px -3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -5px rgba(0,0,0,0.3);
+  --shadow-xl: 0 20px 40px -10px rgba(0,0,0,0.5);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--gray-50);
-  color: var(--gray-900);
+  background: var(--bg);
+  color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s, color 0.2s;
 }
 
 /* ============ BRAND ============ */
@@ -55,12 +103,13 @@ body {
 .brand span { color: var(--primary); }
 
 /* ============ LANDING ============ */
-.landing { min-height: 100vh; background: white; overflow-x: hidden; }
+.landing { min-height: 100vh; background: var(--landing-bg); overflow-x: hidden; }
 
 .landing-nav {
   display: flex; align-items: center; justify-content: space-between;
   padding: 18px 48px; max-width: 1280px; margin: 0 auto;
   border-bottom: 1px solid var(--gray-100);
+  background: var(--landing-bg);
 }
 .landing-nav .nav-links { display: flex; align-items: center; gap: 6px; }
 .landing-nav .nav-links a {
@@ -520,48 +569,92 @@ button:disabled, .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: 
   .hero { flex-direction: column; padding: 40px 20px; gap: 32px; text-align: center; }
   .hero-content h1 { font-size: 32px; }
   .hero-content > p { max-width: 100%; }
-  .hero-buttons { justify-content: center; }
-  .hero-metrics { justify-content: center; }
+  .hero-buttons { justify-content: center; flex-wrap: wrap; }
+  .hero-buttons .btn-primary,
+  .hero-buttons .btn-outline { padding: 10px 20px; font-size: 14px; }
+  .hero-metrics { justify-content: center; flex-wrap: wrap; }
   .hero-illustration { min-height: auto; padding: 24px; align-items: center; }
   .h-card { width: 100%; }
   .h-card-2 { margin-left: 0; }
+  .h-card, .h-card-1, .h-card-2, .h-card-3 { animation: none; }
   .section { padding: 48px 20px; }
+  .section-hdr { margin-bottom: 32px; }
   .section-hdr h2 { font-size: 26px; }
   .features-grid { grid-template-columns: 1fr; }
+  .feature-card { padding: 24px 20px; }
   .steps-grid { grid-template-columns: 1fr; }
+  .step-card { padding: 24px 18px; }
   .integrations-grid { grid-template-columns: 1fr; }
   .stats-container { grid-template-columns: 1fr 1fr; gap: 24px; padding: 32px 24px; }
   .stat-num { font-size: 28px; }
   .portals-section { grid-template-columns: 1fr; }
+  .portal-card { padding: 24px 18px; }
   .cta-content { padding: 40px 24px; }
   .cta-content h2 { font-size: 24px; }
-  .cta-buttons { flex-direction: column; }
+  .cta-buttons { flex-direction: column; align-items: center; }
+  .btn-cta, .btn-cta-outline { padding: 12px 24px !important; font-size: 15px !important; width: 100%; }
   .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+  .footer { padding: 40px 20px 24px; }
   .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
 
-  .portal-nav { padding: 0 12px; gap: 2px; overflow-x: auto; }
+  .portal-nav { padding: 0 12px; gap: 2px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .portal-nav::-webkit-scrollbar { display: none; }
   .portal-nav .brand { font-size: 15px; margin-right: 12px; }
   .portal-nav .nav-type { font-size: 10px; padding: 3px 8px; margin-right: 8px; }
   .portal-nav a { font-size: 12px; padding: 6px 10px; white-space: nowrap; }
   .container { padding: 20px 16px; }
+  .page-hdr { margin-bottom: 20px; }
   .page-hdr h1 { font-size: 20px; }
+  .page-hdr p { font-size: 13px; }
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .stat-card { padding: 14px 16px; }
   .stat-card .s-number { font-size: 20px; }
+  .stat-card .s-icon { width: 40px; height: 40px; font-size: 18px; }
   .flex { flex-direction: column; }
+  .flex > [style*="flex:"] { flex: 1 1 100% !important; max-width: 100% !important; }
   .card { padding: 18px; }
   table { font-size: 13px; }
-  th, td { padding: 10px 12px; }
+  th, td { padding: 10px 8px; }
+  th:first-child, td:first-child { padding-left: 12px; }
+  th:last-child, td:last-child { padding-right: 12px; }
+  td input, td select { width: 100% !important; min-width: 0 !important; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  button, .btn { padding: 8px 16px; font-size: 13px; }
+  .btn-block { padding: 10px; }
   .vitals-grid { grid-template-columns: 1fr; }
+  .vital-item .v-value { font-size: 17px; }
+  .step { gap: 10px; padding: 12px 0; }
+  .step-num { width: 24px; height: 24px; font-size: 11px; }
+  .badge { font-size: 11px; padding: 1px 8px; }
+  .empty-state { padding: 32px 16px; }
+  .empty-state .empty-icon { font-size: 36px; }
+  .theme-toggle { bottom: 80px; right: 24px; }
 }
 
 @media (max-width: 480px) {
-  .stats-grid { grid-template-columns: 1fr; }
   .hero-content h1 { font-size: 26px; }
+  .hero-content > p { font-size: 15px; }
+  .hero-buttons .btn-primary,
+  .hero-buttons .btn-outline { padding: 8px 16px; font-size: 13px; width: 100%; }
+  .stats-grid { grid-template-columns: 1fr; }
   .stats-container { grid-template-columns: 1fr; gap: 20px; }
   .stat-num { font-size: 24px; }
+  .section-hdr h2 { font-size: 22px; }
   .portal-nav a { font-size: 11px; padding: 5px 8px; }
   .portal-nav .brand { font-size: 14px; }
+  .portal-nav .nav-type { display: none; }
+  .container { padding: 16px 12px; }
+  .card { padding: 14px; border-radius: var(--radius-sm); }
+  th, td { padding: 8px 6px; font-size: 12px; }
+  th:first-child, td:first-child { padding-left: 8px; }
+  th:last-child, td:last-child { padding-right: 8px; }
+  button, .btn { padding: 7px 14px; font-size: 12px; }
+  .btn-sm { padding: 4px 8px; font-size: 10px; }
+  .page-hdr h1 { font-size: 18px; }
+  .form-group input, .form-group select { padding: 8px 12px; font-size: 13px; }
+  .chat-panel { width: calc(100vw - 16px); right: 8px; bottom: 80px; height: 400px; }
+  .chat-fab { width: 48px; height: 48px; font-size: 20px; bottom: 16px; right: 16px; }
+  .theme-toggle { width: 36px; height: 36px; font-size: 15px; bottom: 72px; right: 16px; }
 }
 
 /* ============ CHAT BOT ============ */
@@ -650,6 +743,17 @@ button:disabled, .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: 
 @media (max-width: 480px) {
   .chat-panel { width: calc(100vw - 32px); right: 16px; height: 460px; }
 }
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle {
+  position: fixed; bottom: 88px; right: 88px; z-index: 9998;
+  width: 40px; height: 40px; border-radius: 50%; border: none;
+  background: var(--card-bg); color: var(--text);
+  font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-md); transition: all var(--transition);
+  border: 1px solid var(--card-border);
+}
+.theme-toggle:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); }
 
 /* ============ HELPERS ============ */
 .flex { display: flex; gap: 20px; flex-wrap: wrap; }

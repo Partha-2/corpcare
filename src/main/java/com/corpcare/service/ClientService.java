@@ -51,6 +51,15 @@ public class ClientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Client", id));
     }
 
+    public Client updateClient(Long id, ClientRequest request) {
+        Client client = getClientById(id);
+        client.setCompanyName(request.getCompanyName());
+        client.setContactEmail(request.getContactEmail());
+        client.setContactPhone(request.getContactPhone());
+        if (request.getMaxEmployees() != null) client.setMaxEmployees(request.getMaxEmployees());
+        return clientRepository.save(client);
+    }
+
     @Transactional
     public void deleteClient(Long id) {
         Client client = getClientById(id);

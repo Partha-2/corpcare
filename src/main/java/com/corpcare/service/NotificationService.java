@@ -104,9 +104,21 @@ public class NotificationService {
             return;
         }
         try {
+            String promptText = "You are a confirmation assistant for CorpCare, a corporate employee health management platform. "
+                    + "Your job is to confirm a booked appointment. "
+                    + "Follow this exact flow: "
+                    + "Step 1 - Greet: \"Hello, may I speak with " + name + "?\" Wait for response. "
+                    + "Step 2 - Introduce: \"Hi " + name + ", I'm calling from CorpCare regarding your health appointment.\" "
+                    + "Step 3 - Confirm details out loud: \"Your appointment has been booked at " + hospital + " on " + date + ". Your shift is " + shift + ". The purpose of your visit is a routine health checkup.\" "
+                    + "Step 4 - Wait for acknowledgement: Ask \"Does that sound correct to you?\" Wait for employee to respond. "
+                    + "Step 5 - Close: If they confirm -> \"Perfect! Please carry your Employee ID and arrive 10 minutes early. Thank you and have a great day! Goodbye.\" "
+                    + "If they want to reschedule -> \"No problem, please contact CorpCare support to reschedule. Have a great day! Goodbye.\" "
+                    + "Guardrails: NEVER hang up before Step 4. ALWAYS wait for employee response after each question. Do not rush through the script. Do not discuss anything outside appointment confirmation.";
+
             String body = "{"
                     + "\"agent_id\": \"" + bolnaAgentId + "\","
                     + "\"recipient_phone_number\": \"" + phone + "\","
+                    + "\"prompt\": \"" + promptText.replace("\"", "\\\"") + "\","
                     + "\"user_data\": {"
                     + "\"name\": \"" + name + "\","
                     + "\"hospital\": \"" + hospital + "\","

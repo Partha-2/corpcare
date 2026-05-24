@@ -6,6 +6,8 @@ import HospitalNav from './components/HospitalNavbar'
 import EmployeeNav from './components/EmployeeNavbar'
 import ToastContainer from './components/Toast'
 import ChatBot from './components/ChatBot'
+import ErrorBoundary from './components/ErrorBoundary'
+import ThemeToggle from './components/ThemeToggle'
 import AdminLogin from './pages/admin/Login'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminClients from './pages/admin/Clients'
@@ -38,7 +40,9 @@ export default function App() {
   return (
     <>
       <ToastContainer />
+      <ThemeToggle />
       <ChatBot />
+      <ErrorBoundary>
       <Routes>
       <Route path="/" element={<Landing />} />
 
@@ -69,5 +73,6 @@ export default function App() {
       <Route path="/employee/book" element={<Layout nav={EmployeeNav}><EmployeeBook /></Layout>} />
       <Route path="/employee/appointments" element={<Layout nav={EmployeeNav}><EmployeeAppointments /></Layout>} />
       </Routes>
+      </ErrorBoundary>
     </>  )
 }

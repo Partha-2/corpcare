@@ -41,7 +41,7 @@ export default function EmployeeVitals() {
     <div className="fade-in">
       <div className="page-hdr">
         <h1>My Health Vitals</h1>
-        <p>{employee.fullName}</p>
+        <p>{employee.fullName} · <strong>{employee.employeeCode}</strong> · {employee.email}</p>
       </div>
 
       <div className="flex" style={{ gap: 24, alignItems: 'flex-start' }}>

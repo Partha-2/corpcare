@@ -43,12 +43,13 @@ export default function Appointments() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Employee</th><th>Date</th><th>Shift</th><th>Status</th></tr>
+                <tr><th>Employee</th><th>ID</th><th>Date</th><th>Shift</th><th>Status</th></tr>
               </thead>
               <tbody>
                 {appointments.map(b => (
                   <tr key={b.id}>
                     <td><strong>{b.employee?.fullName}</strong></td>
+                    <td><span className="badge">{b.employee?.employeeCode}</span></td>
                     <td>{b.slot?.slotDate}</td>
                     <td>{SHIFTS[b.slot?.shiftType] || '-'}</td>
                     <td><span className="status-badge status-available">● Confirmed</span></td>

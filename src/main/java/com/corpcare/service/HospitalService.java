@@ -46,6 +46,14 @@ public class HospitalService {
                 .orElseThrow(() -> new ResourceNotFoundException("Hospital", id));
     }
 
+    public Hospital updateHospital(Long id, HospitalRequest request) {
+        Hospital hospital = getHospitalById(id);
+        hospital.setHospitalName(request.getHospitalName());
+        hospital.setCity(request.getCity());
+        hospital.setContactEmail(request.getContactEmail());
+        return hospitalRepository.save(hospital);
+    }
+
     @Transactional
     public void deleteHospital(Long id) {
         Hospital hospital = getHospitalById(id);

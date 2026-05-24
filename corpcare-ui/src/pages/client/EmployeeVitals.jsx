@@ -9,17 +9,20 @@ const BG_LABELS = { A_POSITIVE: 'A+', A_NEGATIVE: 'A-', B_POSITIVE: 'B+', B_NEGA
 
 export default function EmployeeVitals() {
   const { employeeId } = useParams()
+  const [employee, setEmployee] = useState(null)
   const [vitals, setVitals] = useState(null)
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ height: '', weight: '', bloodPressure: '', bloodSugar: '', bloodGroup: '' })
 
   useEffect(() => {
-    api.get(`/employees/${employeeId}/vitals`).then(r => {
-      const v = r.data.data
-      setVitals(v)
-      setForm({ height: v.height, weight: v.weight, bloodPressure: v.bloodPressure, bloodSugar: v.bloodSugar, bloodGroup: v.bloodGroup })
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    Promise.all([
+      api.get(`/employees/${employeeId}`).then(r => setEmployee(r.data.data)).catch(() => {}),
+      api.get(`/employees/${employeeId}/vitals`).then(r => {
+        const v = r.data.data
+        setVitals(v)
+        setForm({ height: v.height, weight: v.weight, bloodPressure: v.bloodPressure, bloodSugar: v.bloodSugar, bloodGroup: v.bloodGroup })
+      }).catch(() => {})
+    ]).finally(() => setLoading(false))
   }, [employeeId])
 
   const handleSubmit = async (e) => {
@@ -42,7 +45,7 @@ export default function EmployeeVitals() {
       <Link to="/client/employees" style={{ color: 'var(--primary)', fontSize: 14, fontWeight: 500, textDecoration: 'none', marginBottom: 16, display: 'inline-block' }}>← Back to Employees</Link>
       <div className="page-hdr">
         <h1>Health Vitals</h1>
-        <p>Record and view employee health information</p>
+        <p>{employee ? `${employee.fullName} · ${employee.employeeCode} · ${employee.email}` : `Employee #${employeeId}`}</p>
       </div>
 
       <div className="flex" style={{ gap: 24, alignItems: 'flex-start' }}>

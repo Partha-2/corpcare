@@ -35,6 +35,12 @@ public class HospitalController {
         return ResponseEntity.ok(ApiResponse.success("Hospitals fetched successfully", hospitals));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Hospital>> updateHospital(@PathVariable Long id, @Valid @RequestBody HospitalRequest request) {
+        Hospital hospital = hospitalService.updateHospital(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Hospital updated successfully", hospital));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteHospital(@PathVariable Long id) {
         hospitalService.deleteHospital(id);

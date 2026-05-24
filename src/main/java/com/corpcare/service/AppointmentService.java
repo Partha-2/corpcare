@@ -67,6 +67,10 @@ public class AppointmentService {
         return appointmentRepository.findBySlotHospitalId(hospitalId);
     }
 
+    public List<Appointment> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
+
     @Transactional
     public void cancelAppointment(Long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)

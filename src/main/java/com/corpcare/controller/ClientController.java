@@ -35,6 +35,12 @@ public class ClientController {
         return ResponseEntity.ok(ApiResponse.success("Clients fetched successfully", clients));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Client>> updateClient(@PathVariable Long id, @Valid @RequestBody ClientRequest request) {
+        Client client = clientService.updateClient(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Client updated successfully", client));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteClient(@PathVariable Long id) {
         clientService.deleteClient(id);

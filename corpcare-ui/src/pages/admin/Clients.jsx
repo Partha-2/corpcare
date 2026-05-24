@@ -1,26 +1,24 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
+import SearchBar from '../../components/SearchBar'
 import { toast } from '../../components/Toast'
 
 export default function AdminClients() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState({})
+  const [search, setSearch] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({})
   const [form, setForm] = useState({ companyName: '', contactEmail: '', contactPhone: '', maxEmployees: 100 })
 
   useEffect(() => {
-    api.get('/clients').then(r => {
-      setClients(r.data.data)
-      setLoading(false)
-    })
+    api.get('/clients').then(r => { setClients(r.data.data); setLoading(false) })
   }, [])
 
   const toggle = async (id) => {
-    if (expanded[id]) {
-      setExpanded(prev => ({ ...prev, [id]: null }))
-      return
-    }
+    if (expanded[id]) { setExpanded(prev => ({ ...prev, [id]: null })); return }
     const r = await api.get(`/clients/${id}/employees`)
     setExpanded(prev => ({ ...prev, [id]: r.data.data }))
   }
@@ -33,10 +31,28 @@ export default function AdminClients() {
       setForm({ companyName: '', contactEmail: '', contactPhone: '', maxEmployees: 100 })
       const r = await api.get('/clients')
       setClients(r.data.data)
-    } catch (err) {
-      toast(err.response?.data?.message || 'Failed', 'error')
-    }
+    } catch (err) { toast(err.response?.data?.message || 'Failed', 'error') }
   }
+
+  const startEdit = (c) => {
+    setEditingId(c.id)
+    setEditForm({ companyName: c.companyName, contactEmail: c.contactEmail, contactPhone: c.contactPhone, maxEmployees: c.maxEmployees })
+  }
+
+  const saveEdit = async (id) => {
+    try {
+      await api.put(`/clients/${id}`, editForm)
+      toast('Client updated')
+      setEditingId(null)
+      const r = await api.get('/clients')
+      setClients(r.data.data)
+    } catch (err) { toast(err.response?.data?.message || 'Failed', 'error') }
+  }
+
+  const filtered = clients.filter(c =>
+    c.companyName.toLowerCase().includes(search.toLowerCase()) ||
+    c.contactEmail.toLowerCase().includes(search.toLowerCase())
+  )
 
   if (loading) return <Loading text="Loading clients..." />
 
@@ -72,43 +88,62 @@ export default function AdminClients() {
         </div>
 
         <div className="card" style={{ flex: 1, minWidth: 0 }}>
-          {clients.length === 0 ? (
+          <div style={{ marginBottom: 16 }}>
+            <SearchBar value={search} onChange={setSearch} placeholder="Search clients..." />
+          </div>
+          {filtered.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">🏢</div>
-              <p>No clients yet. Register your first corporate client.</p>
+              <p>{search ? 'No clients match your search' : 'No clients yet'}</p>
             </div>
           ) : (
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Company</th><th>Email</th><th>Phone</th><th>Max</th><th></th><th></th></tr>
+                  <tr><th>Company</th><th>Email</th><th>Phone</th><th>Max</th><th></th><th></th><th></th></tr>
                 </thead>
                 <tbody>
-                  {clients.map(c => (
-                    <tr key={c.id} onClick={() => toggle(c.id)} style={{ cursor: 'pointer' }}>
-                      <td><strong>{c.companyName}</strong></td>
-                      <td>{c.contactEmail}</td>
-                      <td>{c.contactPhone}</td>
-                      <td>{c.maxEmployees}</td>
-                      <td>
-                        <span className="btn btn-sm btn-ghost" style={{ pointerEvents: 'none' }}>
-                          {expanded[c.id] ? '▲' : '▼'} {expanded[c.id]?.length || 0}
-                        </span>
-                      </td>
-                      <td onClick={e => e.stopPropagation()}>
-                        <button className="btn btn-sm btn-danger" onClick={async () => {
-                          if (!window.confirm(`Delete ${c.companyName} and all employees?`)) return
-                          try {
-                            await api.delete(`/clients/${c.id}`)
-                            toast(`${c.companyName} deleted`)
-                            const r = await api.get('/clients')
-                            setClients(r.data.data)
-                            setExpanded(prev => ({ ...prev, [c.id]: null }))
-                          } catch (err) {
-                            toast(err.response?.data?.message || 'Failed', 'error')
-                          }
-                        }}>Delete</button>
-                      </td>
+                  {filtered.map(c => (
+                    <tr key={c.id} onClick={() => !editingId && toggle(c.id)} style={{ cursor: editingId ? 'default' : 'pointer' }}>
+                      {editingId === c.id ? (
+                        <>
+                          <td><input value={editForm.companyName} onChange={e => setEditForm({...editForm, companyName: e.target.value})} style={{ width: 130, padding: '6px 8px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4 }} /></td>
+                          <td><input value={editForm.contactEmail} onChange={e => setEditForm({...editForm, contactEmail: e.target.value})} style={{ width: 160, padding: '6px 8px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4 }} /></td>
+                          <td><input value={editForm.contactPhone} onChange={e => setEditForm({...editForm, contactPhone: e.target.value})} style={{ width: 130, padding: '6px 8px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4 }} /></td>
+                          <td><input type="number" value={editForm.maxEmployees} onChange={e => setEditForm({...editForm, maxEmployees: +e.target.value})} style={{ width: 60, padding: '6px 8px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4 }} /></td>
+                          <td colSpan={3} style={{ display: 'flex', gap: 6 }}>
+                            <button className="btn btn-sm" onClick={e => { e.stopPropagation(); saveEdit(c.id) }}>Save</button>
+                            <button className="btn btn-sm btn-ghost" onClick={e => { e.stopPropagation(); setEditingId(null) }}>Cancel</button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td><strong>{c.companyName}</strong></td>
+                          <td>{c.contactEmail}</td>
+                          <td>{c.contactPhone}</td>
+                          <td>{c.maxEmployees}</td>
+                          <td onClick={e => e.stopPropagation()}>
+                            <span className="btn btn-sm btn-ghost" style={{ pointerEvents: 'none' }}>
+                              {expanded[c.id] ? '▲' : '▼'} {expanded[c.id]?.length || 0}
+                            </span>
+                          </td>
+                          <td onClick={e => e.stopPropagation()}>
+                            <button className="btn btn-sm btn-ghost" onClick={() => startEdit(c)}>Edit</button>
+                          </td>
+                          <td onClick={e => e.stopPropagation()}>
+                            <button className="btn btn-sm btn-danger" onClick={async () => {
+                              if (!window.confirm(`Delete ${c.companyName} and all employees?`)) return
+                              try {
+                                await api.delete(`/clients/${c.id}`)
+                                toast(`${c.companyName} deleted`)
+                                const r = await api.get('/clients')
+                                setClients(r.data.data)
+                                setExpanded(prev => ({ ...prev, [c.id]: null }))
+                              } catch (err) { toast(err.response?.data?.message || 'Failed', 'error') }
+                            }}>Delete</button>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -130,21 +165,14 @@ export default function AdminClients() {
               onSubmit={async (e) => {
                 e.preventDefault()
                 const f = e.target
-                const payload = {
-                  employeeCode: f.code.value,
-                  fullName: f.name.value,
-                  email: f.email.value,
-                  phone: f.phone.value
-                }
+                const payload = { employeeCode: f.code.value, fullName: f.name.value, email: f.email.value, phone: f.phone.value }
                 try {
                   await api.post(`/clients/${client.id}/employees`, payload)
                   toast(`${payload.fullName} added`)
                   f.reset()
                   const r = await api.get(`/clients/${client.id}/employees`)
                   setExpanded(prev => ({ ...prev, [client.id]: r.data.data }))
-                } catch (err) {
-                  toast(err.response?.data?.message || 'Failed', 'error')
-                }
+                } catch (err) { toast(err.response?.data?.message || 'Failed', 'error') }
               }}
               style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 12 }}
             >

@@ -13,6 +13,7 @@ export default function EmployeeBook() {
   const [slots, setSlots] = useState([])
   const [slotLoading, setSlotLoading] = useState(false)
   const [selectedHospital, setSelectedHospital] = useState('')
+  const [selectedDate, setSelectedDate] = useState('')
   const [selectedSlot, setSelectedSlot] = useState('')
   const [booking, setBooking] = useState(false)
 
@@ -21,13 +22,29 @@ export default function EmployeeBook() {
     api.get('/hospitals').then(r => setHospitals(r.data.data))
   }, [])
 
-  const loadSlots = async (id) => {
-    setSelectedHospital(id)
+  const loadSlots = (id, date) => {
     setSelectedSlot('')
     setSlotLoading(true)
-    const r = await api.get(`/hospitals/${id}/slots/available`)
-    setSlots(r.data.data)
-    setSlotLoading(false)
+    const params = date ? `?date=${date}` : ''
+    api.get(`/hospitals/${id}/slots/available${params}`).then(r => {
+      setSlots(r.data.data)
+      setSlotLoading(false)
+    })
+  }
+
+  const handleHospitalChange = (id) => {
+    setSelectedHospital(id)
+    setSelectedDate('')
+    setSlots([])
+    setSelectedSlot('')
+  }
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date)
+    setSelectedSlot('')
+    if (selectedHospital && date) {
+      loadSlots(selectedHospital, date)
+    }
   }
 
   const handleBook = async () => {
@@ -35,7 +52,7 @@ export default function EmployeeBook() {
     try {
       const r = await api.post('/appointments', { employeeId: employee.id, slotId: +selectedSlot })
       toast('Appointment booked! Check WhatsApp for confirmation.')
-      loadSlots(selectedHospital)
+      handleDateChange(selectedDate)
     } catch (err) {
       toast(err.response?.data?.message || 'Failed', 'error')
     } finally {
@@ -58,14 +75,14 @@ export default function EmployeeBook() {
               <div className="step-num">1</div>
               <div className="step-content">
                 <div className="step-label">Employee</div>
-                <p style={{ fontSize: 14, fontWeight: 600 }}>{employee.fullName}</p>
+                <p style={{ fontSize: 14, fontWeight: 600 }}>{employee.fullName} <span style={{ fontWeight: 400, color: 'var(--gray-500)' }}>({employee.employeeCode})</span></p>
               </div>
             </div>
             <div className="step">
               <div className="step-num">2</div>
               <div className="step-content">
                 <div className="step-label">Hospital</div>
-                <select value={selectedHospital} onChange={e => loadSlots(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: 14 }}>
+                <select value={selectedHospital} onChange={e => handleHospitalChange(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: 14 }}>
                   <option value="">Choose hospital...</option>
                   {hospitals.map(h => <option key={h.id} value={h.id}>{h.hospitalName}</option>)}
                 </select>
@@ -74,16 +91,23 @@ export default function EmployeeBook() {
             <div className="step">
               <div className="step-num">3</div>
               <div className="step-content">
+                <div className="step-label">Date</div>
+                <input type="date" value={selectedDate} onChange={e => handleDateChange(e.target.value)} disabled={!selectedHospital} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: 14 }} />
+              </div>
+            </div>
+            <div className="step">
+              <div className="step-num">4</div>
+              <div className="step-content">
                 <div className="step-label">Time Slot</div>
                 {slotLoading ? (
                   <div style={{ padding: '10px 0', fontSize: 13, color: 'var(--gray-400)' }}>Loading slots...</div>
                 ) : (
-                  <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)} disabled={!selectedHospital} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: 14 }}>
+                  <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)} disabled={!selectedDate || !selectedHospital} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: 14 }}>
                     <option value="">Choose slot...</option>
-                    {slots.map(s => <option key={s.id} value={s.id}>{s.slotDate} — {SHIFTS[s.shiftType] || s.shiftType}</option>)}
+                    {slots.map(s => <option key={s.id} value={s.id}>{SHIFTS[s.shiftType] || s.shiftType}</option>)}
                   </select>
                 )}
-                {selectedHospital && !slotLoading && slots.length === 0 && <p style={{ color: '#dc2626', fontSize: 13, marginTop: 6 }}>No slots available</p>}
+                {selectedDate && !slotLoading && slots.length === 0 && <p style={{ color: '#dc2626', fontSize: 13, marginTop: 6 }}>No slots available for this date</p>}
               </div>
             </div>
           </div>
@@ -98,7 +122,8 @@ export default function EmployeeBook() {
             {[
               { icon: '👤', title: 'Your Identity', desc: 'Signed in as ' + employee.fullName },
               { icon: '🏥', title: 'Pick a Hospital', desc: 'Choose from partner hospitals' },
-              { icon: '⏰', title: 'Select Slot', desc: 'One slot = one person — first come, first served' },
+              { icon: '📅', title: 'Select Date', desc: 'Pick a date for your checkup' },
+              { icon: '⏰', title: 'Choose Slot', desc: 'One slot = one person — first come, first served' },
               { icon: '📞', title: 'Voice Confirmation', desc: employee.phone ? `You'll get a Bolna.ai call on ${employee.phone}` : 'Add phone to receive a confirmation call' },
               { icon: '💬', title: 'WhatsApp Message', desc: 'Slot details, location & timing sent automatically' }
             ].map((item, i) => (

@@ -72,7 +72,7 @@ export default function HospitalAppointments() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Date</th><th>Shift</th><th>Employee</th><th>Email</th><th></th></tr>
+                <tr><th>Date</th><th>Shift</th><th>Employee</th><th>ID</th><th>Email</th><th></th></tr>
               </thead>
               <tbody>
                 {appointments.map(a => (
@@ -80,6 +80,7 @@ export default function HospitalAppointments() {
                     <td><strong>{a.slot?.slotDate}</strong></td>
                     <td style={{ color: 'var(--gray-500)' }}>{SHIFTS[a.slot?.shiftType] || a.slot?.shiftType}</td>
                     <td>{a.employee?.fullName}</td>
+                    <td><span className="badge">{a.employee?.employeeCode}</span></td>
                     <td style={{ color: 'var(--gray-500)' }}>{a.employee?.email}</td>
                     <td>
                       <button className="btn btn-sm btn-danger" onClick={() => handleCancel(a.id)}>Cancel</button>
