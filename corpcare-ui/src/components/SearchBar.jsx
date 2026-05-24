@@ -9,7 +9,7 @@ export default function SearchBar({ value, onChange, placeholder = 'Search...' }
         style={{
           width: '100%', padding: '10px 14px 10px 38px', fontSize: 14,
           border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-xs)',
-          background: 'white', fontFamily: 'inherit', transition: 'border-color 0.15s',
+          background: 'var(--input-bg)', fontFamily: 'inherit', transition: 'border-color 0.15s',
           outline: 'none'
         }}
         onFocus={e => e.target.style.borderColor = 'var(--primary)'}

@@ -104,16 +104,15 @@ public class NotificationService {
             return;
         }
         try {
-            String promptText = "You are a confirmation assistant for CorpCare, a corporate employee health management platform. "
-                    + "Your job is to confirm a booked appointment. "
-                    + "Follow this exact flow: "
-                    + "Step 1 - Greet: \"Hello, may I speak with " + name + "?\" Wait for response. "
-                    + "Step 2 - Introduce: \"Hi " + name + ", I'm calling from CorpCare regarding your health appointment.\" "
-                    + "Step 3 - Confirm details out loud: \"Your appointment has been booked at " + hospital + " on " + date + ". Your shift is " + shift + ". The purpose of your visit is a routine health checkup.\" "
-                    + "Step 4 - Wait for acknowledgement: Ask \"Does that sound correct to you?\" Wait for employee to respond. "
-                    + "Step 5 - Close: If they confirm -> \"Perfect! Please carry your Employee ID and arrive 10 minutes early. Thank you and have a great day! Goodbye.\" "
-                    + "If they want to reschedule -> \"No problem, please contact CorpCare support to reschedule. Have a great day! Goodbye.\" "
-                    + "Guardrails: NEVER hang up before Step 4. ALWAYS wait for employee response after each question. Do not rush through the script. Do not discuss anything outside appointment confirmation.";
+            String promptText = "You are a confirmation assistant for CorpCare calling " + name + ". "
+                    + "Follow this exact flow and DO NOT skip any step. "
+                    + "Step 1: Say hello and ask if you are speaking with " + name + ". Wait for their reply. "
+                    + "Step 2: Introduce yourself as calling from CorpCare regarding their health appointment. "
+                    + "Step 3: Say their appointment is at " + hospital + " on " + date + " shift " + shift + " for a routine health checkup. "
+                    + "Step 4: Ask if the details are correct. Wait for their response. "
+                    + "Step 5: If they confirm, say carry Employee ID, arrive 10 minutes early, thank them and say goodbye. "
+                    + "If they want to reschedule, tell them to contact CorpCare support and say goodbye. "
+                    + "IMPORTANT: Never hang up before Step 4. Always wait for the person to respond after each question.";
 
             String body = "{"
                     + "\"agent_id\": \"" + bolnaAgentId + "\","
