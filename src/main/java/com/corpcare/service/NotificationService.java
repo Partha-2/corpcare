@@ -115,15 +115,15 @@ public class NotificationService {
                     + "IMPORTANT: Never hang up before Step 4. Always wait for the person to respond after each question.";
 
             String body = "{"
-                    + "\"agent_id\": \"" + bolnaAgentId + "\","
-                    + "\"recipient_phone_number\": \"" + phone + "\","
-                    + "\"prompt\": \"" + promptText.replace("\"", "\\\"") + "\","
+                    + "\"agent_id\": \"" + jsonEscape(bolnaAgentId) + "\","
+                    + "\"recipient_phone_number\": \"" + jsonEscape(phone) + "\","
+                    + "\"prompt\": \"" + jsonEscape(promptText) + "\","
                     + "\"user_data\": {"
-                    + "\"name\": \"" + name + "\","
-                    + "\"hospital\": \"" + hospital + "\","
-                    + "\"city\": \"" + city + "\","
-                    + "\"date\": \"" + date + "\","
-                    + "\"shift\": \"" + shift + "\""
+                    + "\"name\": \"" + jsonEscape(name) + "\","
+                    + "\"hospital\": \"" + jsonEscape(hospital) + "\","
+                    + "\"city\": \"" + jsonEscape(city) + "\","
+                    + "\"date\": \"" + jsonEscape(date) + "\","
+                    + "\"shift\": \"" + jsonEscape(shift) + "\""
                     + "}"
                     + "}";
 
@@ -139,6 +139,15 @@ public class NotificationService {
         } catch (Exception e) {
             log.error("Bolna call failed for {}: {}", phone, e.getMessage());
         }
+    }
+
+    private String jsonEscape(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     private void sendWhatsApp(String to, String name, String hospital, String city, String date, String shift) {
