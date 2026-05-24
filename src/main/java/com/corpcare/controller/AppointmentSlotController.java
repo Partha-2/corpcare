@@ -1,5 +1,6 @@
 package com.corpcare.controller;
 
+import com.corpcare.config.SecurityUtil;
 import com.corpcare.dto.ApiResponse;
 import com.corpcare.dto.SlotRequest;
 import com.corpcare.entity.AppointmentSlot;
@@ -26,6 +27,7 @@ public class AppointmentSlotController {
     public ResponseEntity<ApiResponse<AppointmentSlot>> createSlot(
             @PathVariable Long hospitalId,
             @Valid @RequestBody SlotRequest request) {
+        SecurityUtil.requireOwnership(hospitalId, "HOSPITAL");
         AppointmentSlot slot = slotService.createSlot(hospitalId, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -44,6 +46,7 @@ public class AppointmentSlotController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<AppointmentSlot>>> getAllSlots(
             @PathVariable Long hospitalId) {
+        SecurityUtil.requireOwnership(hospitalId, "HOSPITAL");
         List<AppointmentSlot> slots = slotService.getAllSlotsByHospital(hospitalId);
         return ResponseEntity.ok(ApiResponse.success("Slots fetched successfully", slots));
     }

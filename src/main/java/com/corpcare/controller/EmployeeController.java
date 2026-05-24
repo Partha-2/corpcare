@@ -1,5 +1,6 @@
 package com.corpcare.controller;
 
+import com.corpcare.config.SecurityUtil;
 import com.corpcare.dto.ApiResponse;
 import com.corpcare.dto.EmployeeRequest;
 import com.corpcare.entity.Employee;
@@ -7,6 +8,7 @@ import com.corpcare.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,6 +35,7 @@ public class EmployeeController {
     public ResponseEntity<ApiResponse<Employee>> addEmployee(
             @PathVariable Long clientId,
             @Valid @RequestBody EmployeeRequest request) {
+        SecurityUtil.requireOwnership(clientId, "CLIENT");
         Employee employee = employeeService.createEmployee(clientId, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -41,7 +44,31 @@ public class EmployeeController {
 
     @GetMapping("/api/clients/{clientId}/employees")
     public ResponseEntity<ApiResponse<List<Employee>>> getEmployees(@PathVariable Long clientId) {
+        SecurityUtil.requireOwnership(clientId, "CLIENT");
         List<Employee> employees = employeeService.getEmployeesByClient(clientId);
         return ResponseEntity.ok(ApiResponse.success("Employees fetched successfully", employees));
+    }
+
+    @GetMapping("/api/employees/{employeeId}")
+    public ResponseEntity<ApiResponse<Employee>> getEmployee(@PathVariable Long employeeId) {
+        Employee employee = employeeService.getEmployeeById(employeeId);
+        var user = SecurityUtil.getCurrentUser();
+        if (user == null) throw new AccessDeniedException("Not authenticated");
+        if ("ADMIN".equals(user.role())) {
+            return ResponseEntity.ok(ApiResponse.success("Employee fetched", employee));
+        }
+        if ("CLIENT".equals(user.role())) {
+            if (!employee.getClient().getId().equals(user.userId())) {
+                throw new AccessDeniedException("Access denied");
+            }
+            return ResponseEntity.ok(ApiResponse.success("Employee fetched", employee));
+        }
+        if ("EMPLOYEE".equals(user.role())) {
+            if (!user.userId().equals(employeeId)) {
+                throw new AccessDeniedException("Access denied");
+            }
+            return ResponseEntity.ok(ApiResponse.success("Employee fetched", employee));
+        }
+        throw new AccessDeniedException("Access denied");
     }
 }
