@@ -5,132 +5,88 @@
 ```
                          Internet
                             │
-                            ▼
-                      ┌──────────┐
-                      │  Nginx   │  Port 80/443
-                      │  (proxy) │
-                      └────┬─────┘
-                           │
-            ┌──────────────┼──────────────┐
-            │              │              │
-            ▼              ▼              ▼
-      ┌──────────┐  ┌──────────┐  ┌──────────┐
-      │ Frontend │  │ Backend  │  │  MySQL   │
-      │  Nginx   │  │ Spring   │  │    8.0   │
-      │ :3000    │  │ Boot     │  │ :3306    │
-      └──────────┘  │ :8080    │  └──────────┘
-                    └──────────┘
+              ┌─────────────┴─────────────┐
+              │                           │
+              ▼                           ▼
+     ┌────────────────┐         ┌──────────────────┐
+     │  Vercel        │         │  Render          │
+     │  (Frontend)    │         │  (Backend)       │
+     │  Static SPA    │  API    │  Docker Web      │
+     │  React 18      │◄────────│  Spring Boot     │
+     │                │  calls  │  :8080           │
+     └────────────────┘         └────────┬─────────┘
+                                         │
+                                         ▼
+                                 ┌──────────────────┐
+                                 │  Filess.io       │
+                                 │  (MySQL 8.0)     │
+                                 │  Free Tier       │
+                                 │  Max 5 conns     │
+                                 └──────────────────┘
 ```
 
-## Docker Compose Stack
+## Services
 
-```yaml
-services:
-  db:
-    image: mysql:8.0
-    volumes: mysql-data:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: corpcare
+| Service | Platform | URL |
+|---------|----------|-----|
+| **Frontend** | Vercel (static site) | `https://corpcare-afxw.vercel.app` |
+| **Backend** | Render (Docker web service) | `https://corpcare.onrender.com` |
+| **Database** | Filess.io (MySQL) | `td8n6s.h.filess.io:3307` |
 
-  backend:
-    build: ./corpcare
-    depends_on: [db]
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/corpcare
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
-      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM}
-      BOLNA_API_KEY: ${BOLNA_API_KEY}
-      BOLNA_AGENT_ID: ${BOLNA_AGENT_ID}
+## How Deployment Works
 
-  frontend:
-    build: ./corpcare-ui
-    ports: ["3000:80"]
-    depends_on: [backend]
+Push to GitHub `main` → both auto-deploy:
+
+```
+Git Push
+   │
+   ├──► Render detects push → rebuilds Docker image → restarts backend
+   │
+   └──► Vercel detects push → rebuilds frontend → updates static site
 ```
 
-## Environment Variables
+## Environment Variables (set in dashboards)
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DB_PASSWORD` | MySQL root password | Yes |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID | For WhatsApp |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token | For WhatsApp |
-| `TWILIO_WHATSAPP_FROM` | WhatsApp sender number | For WhatsApp |
-| `BOLNA_API_KEY` | Bolna.ai API key | For Voice |
-| `BOLNA_AGENT_ID` | Bolna agent UUID | For Voice |
+### Render (backend)
 
-## CI/CD Pipeline
+| Variable | Value |
+|----------|-------|
+| `SPRING_DATASOURCE_URL` | `jdbc:mysql://td8n6s.h.filess.io:3307/corpcare_simplestdo?useSSL=false` |
+| `SPRING_DATASOURCE_DRIVER` | `com.mysql.cj.jdbc.Driver` |
+| `SPRING_DATASOURCE_USERNAME` | `corpcare_simplestdo` |
+| `SPRING_DATASOURCE_PASSWORD` | (your password) |
+| `TWILIO_ACCOUNT_SID` | For WhatsApp |
+| `TWILIO_AUTH_TOKEN` | For WhatsApp |
+| `TWILIO_WHATSAPP_FROM` | `+14155238886` |
+| `BOLNA_API_KEY` | For voice calls |
+| `BOLNA_AGENT_ID` | For voice calls |
 
-```mermaid
-flowchart LR
-    A[Push to main] --> B[GitHub Actions]
-    B --> C[Build Backend JAR]
-    B --> D[Build Frontend]
-    C --> E[Docker Build Backend]
-    D --> F[Docker Build Frontend]
-    E --> G[Push to Registry]
-    F --> G
-    G --> H[Deploy to Server]
-    H --> I[Health Check]
-```
+### Vercel (frontend)
 
-## Manual Deployment (Docker)
+| Variable | Value |
+|----------|-------|
+| `VITE_API_URL` | `https://corpcare.onrender.com/api` |
+
+## Local Development
 
 ```bash
-# 1. Clone
-git clone https://github.com/your-org/corpcare.git
-cd corpcare
+# Backend (uses H2 by default — no MySQL needed)
+cd corpcare && mvn spring-boot:run
 
-# 2. Set env vars
-export DB_PASSWORD=secure_password
-export TWILIO_ACCOUNT_SID=...
-export TWILIO_AUTH_TOKEN=...
-export TWILIO_WHATSAPP_FROM=+14155238886
-export BOLNA_API_KEY=...
-export BOLNA_AGENT_ID=...
-
-# 3. Start
-docker compose up -d --build
-
-# 4. Verify
-docker compose ps
-docker compose logs backend
+# Frontend
+cd corpcare-ui && npm run dev
 ```
 
-## Server Requirements
+## Database
 
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU | 1 core | 2 cores |
-| RAM | 2 GB | 4 GB |
-| Disk | 10 GB | 20 GB (SSD) |
-| OS | Ubuntu 22.04 | Ubuntu 24.04 |
-| Docker | 24+ | 27+ |
-| Docker Compose | v2 | v2 |
+- **Hosted on**: Filess.io (free MySQL)
+- **Connection limit**: 5 concurrent connections
+- **HikariCP pool**: configured for max 5 connections
+- **Fallback**: H2 file mode if MySQL env vars not set
 
-## Monitoring
+## Notes
 
-- Health check: `GET /api/actuator/health` (when Spring Actuator is added)
-- Logs: `docker compose logs -f`
-- Database: `docker compose exec db mysql -u root -p corpcare`
-
-## Backup
-
-```bash
-# Database backup
-docker compose exec db mysqldump -u root -p${DB_PASSWORD} corpcare > backup_$(date +%Y%m%d).sql
-
-# Restore
-cat backup.sql | docker compose exec -T db mysql -u root -p${DB_PASSWORD} corpcare
-```
-
-## Future Improvements
-
-- Add Spring Actuator for production health checks
-- SSL termination via Let's Encrypt + Certbot
-- Prometheus + Grafana monitoring
-- Centralized logging (ELK stack)
-- Horizontal scaling for backend (session affinity)
-- CDN for static assets
-- Blue-green deployment strategy
+- Backend sleeps after 15 min inactivity on Render free tier
+- First request after idle takes ~30s to wake up
+- Upgrade Render to $7/mo for no sleeping
+- Data persists on Filess.io permanently

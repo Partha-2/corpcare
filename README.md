@@ -109,13 +109,11 @@ npm run dev
 
 The database is auto-created and seeded with sample data on first run.
 
-### Production (Docker)
+### Production (Render + Vercel — free)
 
 ```bash
-# From project root
-docker compose up --build -d
-# → Frontend: http://localhost:3000
-# → Backend:  http://localhost:8080
+# Backend → https://render.com (Docker web service)
+# Frontend → https://vercel.com (static site from corpcare-ui/)
 ```
 
 ## Default Test Data
@@ -167,9 +165,7 @@ corpcare/                   # Spring Boot backend
 │   └── service/            # Business logic + notifications
 ├── Dockerfile
 ├── docker-compose.yml
-└── docs/
-    ├── system-design/
-    └── ...
+└── docs/system-design/
 
 corpcare-ui/                # React frontend
 ├── src/
@@ -182,14 +178,15 @@ corpcare-ui/                # React frontend
 │   │   └── employee/       # Employee portal
 │   └── App.jsx             # Router setup
 ├── Dockerfile
-└── nginx/default.conf
+├── nginx/default.conf
+└── vercel.json
 ```
 
-## CI/CD
+## Auto-Deploy
 
-Push to `main` triggers:
-1. Build backend JAR + frontend static files
-2. Build and push Docker images
-3. Deploy via SSH to production server
+Push to `main` automatically deploys both:
 
-See [deploy.yml](.github/workflows/deploy.yml) for full pipeline definition.
+| Platform | Service | Trigger |
+|----------|---------|---------|
+| **Render** | Backend (Docker) | Any push to `main` |
+| **Vercel** | Frontend (static) | Any push to `main` |
