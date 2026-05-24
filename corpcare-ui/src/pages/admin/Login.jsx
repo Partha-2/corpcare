@@ -13,11 +13,11 @@ export default function AdminLogin() {
     setLoading(true)
     setError('')
     try {
-      const r = await api.post('/admin/verify', { password })
-      if (r.data.data?.authenticated) {
-        sessionStorage.setItem('admin_auth', 'true')
-        navigate('/admin')
-      }
+      const r = await api.post('/auth/admin', { password })
+      const { token } = r.data.data
+      sessionStorage.setItem('token', token)
+      sessionStorage.setItem('admin_auth', 'true')
+      navigate('/admin')
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid password')
     } finally {

@@ -5,6 +5,7 @@ export default function EmployeeNavbar() {
   const emp = JSON.parse(sessionStorage.getItem('employee') || '{}')
 
   const handleLogout = () => {
+    sessionStorage.removeItem('token')
     sessionStorage.removeItem('employee')
     navigate('/employee/login')
   }

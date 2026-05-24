@@ -5,6 +5,7 @@ export default function AdminNavbar() {
   const isActive = (path) => window.location.pathname === path || (path !== '/admin' && window.location.pathname.startsWith(path)) ? 'active' : ''
 
   const handleLogout = () => {
+    sessionStorage.removeItem('token')
     sessionStorage.removeItem('admin_auth')
     navigate('/admin/login')
   }

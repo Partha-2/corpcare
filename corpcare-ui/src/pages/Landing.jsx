@@ -18,8 +18,8 @@ const steps = [
 
 const portals = [
   { to: '/admin/login', icon: '⚙️', title: 'Admin Portal', desc: 'Platform owner. Manage all clients, hospitals, and system-wide data.', bg: '#f3e8ff', color: '#6d28d9', top: '#7c3aed' },
-  { to: '/client', icon: '🏢', title: 'Client Portal', desc: 'Corporate companies. Manage employees, record vitals, and book appointments.', bg: '#eff6ff', color: '#2563eb', top: '#2563eb' },
-  { to: '/hospital', icon: '🏥', title: 'Hospital Portal', desc: 'Partner hospitals. Manage appointment slots and view bookings in real-time.', bg: '#ecfdf5', color: '#059669', top: '#059669' },
+  { to: '/client/login', icon: '🏢', title: 'Client Portal', desc: 'Corporate companies. Manage employees, record vitals, and book appointments.', bg: '#eff6ff', color: '#2563eb', top: '#2563eb' },
+  { to: '/hospital/login', icon: '🏥', title: 'Hospital Portal', desc: 'Partner hospitals. Manage appointment slots and view bookings in real-time.', bg: '#ecfdf5', color: '#059669', top: '#059669' },
   { to: '/employee/login', icon: '👤', title: 'Employee Portal', desc: 'Sign in with your email + code to book appointments and manage your health.', bg: '#fef3c7', color: '#92400e', top: '#d97706' },
 ]
 
@@ -37,8 +37,8 @@ export default function Landing() {
         <Link to="/" className="brand">Corp<span>Care</span></Link>
         <div className="nav-links">
           <Link to="/admin/login">Admin</Link>
-          <Link to="/client">Client</Link>
-          <Link to="/hospital">Hospital</Link>
+          <Link to="/client/login">Client</Link>
+          <Link to="/hospital/login">Hospital</Link>
           <Link to="/employee/login" className="login-btn">Employee Login</Link>
         </div>
       </nav>
@@ -55,7 +55,7 @@ export default function Landing() {
             vitals tracking to slot booking, voice calls, and WhatsApp confirmations.
           </p>
           <div className="hero-buttons">
-            <Link to="/client" className="btn-primary">Get Started →</Link>
+            <Link to="/client/login" className="btn-primary">Get Started →</Link>
             <Link to="/employee/login" className="btn-outline">Employee Login</Link>
           </div>
           <div className="hero-metrics">
@@ -248,7 +248,7 @@ export default function Landing() {
           <h2>Ready to simplify employee health management?</h2>
           <p>Join 600+ enterprises managing health checkups at scale.</p>
           <div className="cta-buttons">
-            <Link to="/client" className="btn-primary btn-cta">Get Started Free →</Link>
+            <Link to="/client/login" className="btn-primary btn-cta">Get Started Free →</Link>
             <Link to="/employee/login" className="btn-outline btn-cta-outline">Employee Login</Link>
           </div>
         </div>
@@ -263,8 +263,8 @@ export default function Landing() {
           </div>
           <div className="footer-col">
             <h4>Platform</h4>
-            <Link to="/client">Client Portal</Link>
-            <Link to="/hospital">Hospital Portal</Link>
+            <Link to="/client/login">Client Portal</Link>
+            <Link to="/hospital/login">Hospital Portal</Link>
             <Link to="/employee/login">Employee Portal</Link>
             <Link to="/admin/login">Admin</Link>
           </div>
