@@ -5,6 +5,7 @@ import ClientNav from './components/ClientNavbar'
 import HospitalNav from './components/HospitalNavbar'
 import EmployeeNav from './components/EmployeeNavbar'
 import ToastContainer from './components/Toast'
+import ChatBot from './components/ChatBot'
 import AdminLogin from './pages/admin/Login'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminClients from './pages/admin/Clients'
@@ -37,6 +38,7 @@ export default function App() {
   return (
     <>
       <ToastContainer />
+      <ChatBot />
       <Routes>
       <Route path="/" element={<Landing />} />
 
