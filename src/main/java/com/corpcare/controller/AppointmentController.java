@@ -32,6 +32,7 @@ public class AppointmentController {
             @Valid @RequestBody AppointmentRequest request) {
         var user = SecurityUtil.getCurrentUser();
         if (user == null) throw new AccessDeniedException("Not authenticated");
+        if ("HOSPITAL".equals(user.role())) throw new AccessDeniedException("Access denied");
         if ("CLIENT".equals(user.role())) {
             Employee emp = employeeService.getEmployeeById(request.getEmployeeId());
             if (!emp.getClient().getId().equals(user.userId())) {
