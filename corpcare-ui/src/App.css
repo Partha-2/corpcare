@@ -554,6 +554,20 @@ button:disabled {
 
 /* ============ STEPS ============ */
 .steps { display: flex; flex-direction: column; }
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+
+@media (max-width: 480px) {
+  .steps-grid { grid-template-columns: 1fr; gap: 12px; }
+}
 .step {
   display: flex;
   align-items: flex-start;
@@ -605,6 +619,79 @@ button:disabled {
 }
 .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
 .empty-state p { font-size: 14px; }
+
+/* ============ LOADING SPINNER ============ */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .landing-nav { padding: 14px 20px; flex-wrap: wrap; gap: 8px; }
+  .landing-nav .nav-links { gap: 4px; }
+  .landing-nav .nav-links a { font-size: 12px; padding: 6px 10px; }
+  .landing-nav .login-btn { padding: 6px 16px !important; }
+
+  .hero { flex-direction: column; padding: 40px 20px; gap: 32px; text-align: center; }
+  .hero-content h1 { font-size: 32px; }
+  .hero-content p { max-width: 100%; }
+  .hero-buttons { justify-content: center; }
+  .hero-visual { min-height: auto; padding: 24px; }
+  .hero-visual .hero-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hero-stat { padding: 14px; }
+  .hero-stat .num { font-size: 22px; }
+
+  .portal-nav { padding: 0 12px; gap: 2px; overflow-x: auto; }
+  .portal-nav .brand { font-size: 15px; margin-right: 12px; }
+  .portal-nav .nav-type { font-size: 10px; padding: 3px 8px; margin-right: 8px; }
+  .portal-nav a { font-size: 12px; padding: 6px 10px; white-space: nowrap; }
+
+  .container { padding: 20px 16px; }
+  .page-hdr h1 { font-size: 22px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px 16px; }
+  .stat-card .s-number { font-size: 22px; }
+  .stat-card .s-label { font-size: 12px; }
+
+  .flex { flex-direction: column; }
+  .card { padding: 18px; }
+
+  table { font-size: 13px; }
+  th, td { padding: 10px 12px; }
+
+  .vitals-grid { grid-template-columns: 1fr; }
+  .portal-grid { grid-template-columns: 1fr; padding: 40px 16px; }
+  .portal-card { padding: 28px 20px; }
+
+  .steps { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .hero-content h1 { font-size: 26px; }
+  .hero-content p { font-size: 15px; }
+  .hero-stats { grid-template-columns: 1fr 1fr; }
+  .portal-nav a { font-size: 11px; padding: 5px 8px; }
+  .portal-nav .brand { font-size: 14px; }
+}
 
 /* ============ HELPERS ============ */
 .flex { display: flex; gap: 20px; }

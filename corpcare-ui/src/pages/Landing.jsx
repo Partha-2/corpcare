@@ -64,7 +64,7 @@ export default function Landing() {
           <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.5px' }}>How It Works</h2>
           <p style={{ color: 'var(--gray-500)', fontSize: 16, marginTop: 8 }}>Four simple steps to manage employee health checkups</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+        <div className="steps-grid">
           {[
             { step: '01', title: 'Register Client', desc: 'Admin onboards corporate clients into the platform', color: 'var(--primary)' },
             { step: '02', title: 'Add Employees', desc: 'Client HR adds employees with their details & vitals', color: 'var(--green)' },

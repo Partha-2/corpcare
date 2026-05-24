@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ clients: 0, hospitals: 0, employees: 0, slots: 0 })
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
@@ -29,12 +31,15 @@ export default function AdminDashboard() {
 
       Promise.all(promises).then(() => {
         setStats({ clients: clients.length, hospitals: hospitals.length, employees, slots })
+        setLoading(false)
       })
     })
   }, [])
 
+  if (loading) return <Loading text="Loading dashboard..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <h1>Admin Dashboard</h1>
         <p>CorpCare — Platform Overview</p>
@@ -80,21 +85,6 @@ export default function AdminDashboard() {
           <Link to="/admin/hospitals" className="btn btn-green">🏥 New Hospital</Link>
           <Link to="/admin/clients" className="btn btn-ghost">📋 All Clients</Link>
           <Link to="/admin/hospitals" className="btn btn-ghost">📋 All Hospitals</Link>
-        </div>
-      </div>
-
-      <div className="flex" style={{ gap: 24 }}>
-        <div className="card" style={{ flex: 1 }}>
-          <div className="card-header">
-            <h2>🏢 Recent Clients</h2>
-          </div>
-          <Link to="/admin/clients" className="btn btn-block btn-ghost">View All Clients →</Link>
-        </div>
-        <div className="card" style={{ flex: 1 }}>
-          <div className="card-header">
-            <h2>🏥 Recent Hospitals</h2>
-          </div>
-          <Link to="/admin/hospitals" className="btn btn-block btn-ghost">View All Hospitals →</Link>
         </div>
       </div>
     </div>

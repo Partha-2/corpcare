@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
 
 export default function AdminClients() {
   const [clients, setClients] = useState([])
+  const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState({})
   const [form, setForm] = useState({ companyName: '', contactEmail: '', contactPhone: '', maxEmployees: 100 })
   const [msg, setMsg] = useState(null)
 
   useEffect(() => {
-    api.get('/clients').then(r => setClients(r.data.data))
+    api.get('/clients').then(r => {
+      setClients(r.data.data)
+      setLoading(false)
+    })
   }, [])
 
   const toggle = async (id) => {
@@ -34,8 +38,10 @@ export default function AdminClients() {
     }
   }
 
+  if (loading) return <Loading text="Loading clients..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <h1>All Clients</h1>
         <p>{clients.length} corporate clients registered</p>
@@ -43,8 +49,8 @@ export default function AdminClients() {
       {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       <div className="flex" style={{ gap: 24, alignItems: 'flex-start' }}>
-        <div className="card" style={{ flex: '0 0 380px' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>➕ Register New Client</h2>
+        <div className="card" style={{ flex: '0 0 380px', maxWidth: '100%' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Register New Client</h2>
           <form onSubmit={handleAdd}>
             <div className="form-group">
               <label>Company Name</label>
@@ -66,88 +72,111 @@ export default function AdminClients() {
           </form>
         </div>
 
-        <div className="card" style={{ flex: 1 }}>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Company</th><th>Email</th><th>Phone</th><th>Max Employees</th><th></th></tr>
-              </thead>
-              <tbody>
-                {clients.map(c => (
-                  <>
+        <div className="card" style={{ flex: 1, minWidth: 0 }}>
+          {clients.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">🏢</div>
+              <p>No clients yet. Register your first corporate client.</p>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Company</th><th>Email</th><th>Phone</th><th>Max</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {clients.map(c => (
                     <tr key={c.id} onClick={() => toggle(c.id)} style={{ cursor: 'pointer' }}>
                       <td><strong>{c.companyName}</strong></td>
                       <td>{c.contactEmail}</td>
                       <td>{c.contactPhone}</td>
                       <td>{c.maxEmployees}</td>
                       <td>
-                        <span className="btn btn-sm btn-ghost">
-                          {expanded[c.id] ? '▲' : '▼'} Employees
+                        <span className="btn btn-sm btn-ghost" style={{ pointerEvents: 'none' }}>
+                          {expanded[c.id] ? '▲' : '▼'} {expanded[c.id]?.length || 0}
                         </span>
                       </td>
                     </tr>
-                    {expanded[c.id] && (
-                      <>
-                        <tr style={{ background: 'var(--gray-100)' }}>
-                          <td colSpan={5} style={{ padding: '12px 16px' }}>
-                            <form
-                              onSubmit={async (e) => {
-                                e.preventDefault()
-                                const empForm = e.target
-                                const payload = {
-                                  employeeCode: empForm.code.value,
-                                  fullName: empForm.name.value,
-                                  email: empForm.email.value,
-                                  phone: empForm.phone.value
-                                }
-                                try {
-                                  await api.post(`/clients/${c.id}/employees`, payload)
-                                  setMsg({ type: 'success', text: `✓ ${payload.fullName} added` })
-                                  empForm.reset()
-                                  const r = await api.get(`/clients/${c.id}/employees`)
-                                  setExpanded(prev => ({ ...prev, [c.id]: r.data.data }))
-                                } catch (err) {
-                                  setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
-                                }
-                              }}
-                              style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}
-                            >
-                              <div>
-                                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Code</label>
-                                <input name="code" required placeholder="EMP001" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 100 }} />
-                              </div>
-                              <div>
-                                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Name</label>
-                                <input name="name" required placeholder="Full name" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 160 }} />
-                              </div>
-                              <div>
-                                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Email</label>
-                                <input name="email" type="email" required placeholder="email@co.com" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 180 }} />
-                              </div>
-                              <div>
-                                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Phone</label>
-                                <input name="phone" placeholder="+919999999999" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 140 }} />
-                              </div>
-                              <button type="submit" className="btn btn-sm">+ Add</button>
-                            </form>
-                          </td>
-                        </tr>
-                        {expanded[c.id].map(emp => (
-                          <tr key={`emp-${emp.id}`} style={{ background: 'var(--gray-50)' }}>
-                            <td style={{ paddingLeft: 48 }} colSpan={5}>
-                              👤 <strong>{emp.fullName}</strong> — {emp.employeeCode} — {emp.email}
-                            </td>
-                          </tr>
-                        ))}
-                      </>
-                    )}
-                  </>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
+
+      {Object.entries(expanded).filter(([,v]) => v).map(([id, emps]) => {
+        const client = clients.find(c => c.id === Number(id))
+        if (!client) return null
+        return (
+          <div key={`expand-${id}`} className="card fade-in" style={{ marginTop: -16 }}>
+            <div className="flex-between" style={{ marginBottom: 12 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700 }}>👥 {client.companyName} — Employees ({emps.length})</h3>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                const f = e.target
+                const payload = {
+                  employeeCode: f.code.value,
+                  fullName: f.name.value,
+                  email: f.email.value,
+                  phone: f.phone.value
+                }
+                try {
+                  await api.post(`/clients/${client.id}/employees`, payload)
+                  setMsg({ type: 'success', text: `✓ ${payload.fullName} added` })
+                  f.reset()
+                  const r = await api.get(`/clients/${client.id}/employees`)
+                  setExpanded(prev => ({ ...prev, [client.id]: r.data.data }))
+                } catch (err) {
+                  setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+                }
+              }}
+              style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 12 }}
+            >
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Code</label>
+                <input name="code" required placeholder="EMP001" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 90 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Name</label>
+                <input name="name" required placeholder="Full name" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 150 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Email</label>
+                <input name="email" type="email" required placeholder="email@co.com" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 170 }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 2 }}>Phone</label>
+                <input name="phone" placeholder="+919999999999" style={{ padding: '6px 10px', fontSize: 13, border: '1px solid var(--gray-200)', borderRadius: 4, width: 130 }} />
+              </div>
+              <button type="submit" className="btn btn-sm">+ Add</button>
+            </form>
+            {emps.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--gray-400)', padding: '8px 0' }}>No employees yet</p>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Code</th><th>Name</th><th>Email</th><th>Phone</th></tr>
+                  </thead>
+                  <tbody>
+                    {emps.map(emp => (
+                      <tr key={emp.id}>
+                        <td><span className="badge">{emp.employeeCode}</span></td>
+                        <td>{emp.fullName}</td>
+                        <td>{emp.email}</td>
+                        <td>{emp.phone || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
