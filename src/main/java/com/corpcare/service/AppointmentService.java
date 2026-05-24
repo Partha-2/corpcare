@@ -7,6 +7,7 @@ import com.corpcare.entity.Employee;
 import com.corpcare.exception.BusinessException;
 import com.corpcare.exception.ResourceNotFoundException;
 import com.corpcare.repository.AppointmentRepository;
+import com.corpcare.repository.AppointmentSlotRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,15 +17,18 @@ import java.util.List;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final AppointmentSlotRepository slotRepository;
     private final EmployeeService employeeService;
     private final AppointmentSlotService slotService;
     private final NotificationService notificationService;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
+                              AppointmentSlotRepository slotRepository,
                               EmployeeService employeeService,
                               AppointmentSlotService slotService,
                               NotificationService notificationService) {
         this.appointmentRepository = appointmentRepository;
+        this.slotRepository = slotRepository;
         this.employeeService = employeeService;
         this.slotService = slotService;
         this.notificationService = notificationService;
@@ -45,6 +49,7 @@ public class AppointmentService {
         }
 
         slot.setIsBooked(true);
+        slotRepository.save(slot);
 
         Appointment appointment = new Appointment(employee, slot);
         appointment = appointmentRepository.save(appointment);
@@ -78,6 +83,7 @@ public class AppointmentService {
 
         AppointmentSlot slot = appointment.getSlot();
         slot.setIsBooked(false);
+        slotRepository.save(slot);
 
         appointmentRepository.delete(appointment);
     }
