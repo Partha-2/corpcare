@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
 
 const SHIFTS = {
   MORNING_8_TO_4: '8AM-4PM',
@@ -9,28 +10,20 @@ const SHIFTS = {
 }
 
 export default function Appointments() {
-  const [bookings, setBookings] = useState([])
+  const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/clients').then(c => {
-      if (c.data.data.length > 0) {
-        api.get(`/clients/${c.data.data[0].id}/employees`).then(e => {
-          const ids = e.data.data.map(emp => emp.id)
-          Promise.all(ids.map(id =>
-            api.get(`/employees/${id}/vitals`).then(() => null).catch(() => null)
-          )).then(() => setLoading(false))
-        })
-      } else {
-        setLoading(false)
-      }
-    })
+    api.get('/appointments').then(r => {
+      setAppointments(r.data.data)
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
-  if (loading) return <div className="card">Loading...</div>
+  if (loading) return <Loading text="Loading appointments..." />
 
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <h1>Appointments</h1>
         <p>Your booked health checkups</p>
@@ -40,7 +33,7 @@ export default function Appointments() {
         <div className="card-header">
           <h2>📋 Appointment History</h2>
         </div>
-        {bookings.length === 0 ? (
+        {appointments.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📅</div>
             <p>No appointments yet</p>
@@ -53,7 +46,7 @@ export default function Appointments() {
                 <tr><th>Employee</th><th>Date</th><th>Shift</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {bookings.map(b => (
+                {appointments.map(b => (
                   <tr key={b.id}>
                     <td><strong>{b.employee?.fullName}</strong></td>
                     <td>{b.slot?.slotDate}</td>

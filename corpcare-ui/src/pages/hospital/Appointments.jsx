@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 
 const SHIFTS = { MORNING_8_TO_4: '8AM-4PM', EVENING_4_TO_12: '4PM-12AM', NIGHT_12_TO_8: '12AM-8AM' }
 
 export default function HospitalAppointments() {
   const [hospitals, setHospitals] = useState([])
+  const [loading, setLoading] = useState(true)
   const [hospital, setHospital] = useState(null)
   const [appointments, setAppointments] = useState([])
-  const [msg, setMsg] = useState(null)
 
   const loadAppts = (id) => {
     api.get(`/appointments/hospital/${id}`).then(r => setAppointments(r.data.data))
@@ -20,28 +22,31 @@ export default function HospitalAppointments() {
         setHospital(r.data.data[0])
         loadAppts(r.data.data[0].id)
       }
+      setLoading(false)
     })
   }, [])
 
   const handleHospitalChange = (id) => {
     const h = hospitals.find(x => x.id === +id)
     setHospital(h)
-    setMsg(null)
     if (h) loadAppts(h.id)
   }
 
   const handleCancel = async (id) => {
+    if (!window.confirm('Cancel this appointment?')) return
     try {
       await api.put(`/appointments/${id}/cancel`)
-      setMsg({ type: 'success', text: '✓ Appointment cancelled' })
+      toast('Appointment cancelled')
       loadAppts(hospital.id)
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+      toast(err.response?.data?.message || 'Failed', 'error')
     }
   }
 
+  if (loading) return <Loading text="Loading appointments..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <div className="flex-between" style={{ alignItems: 'flex-start' }}>
           <div>
@@ -53,7 +58,6 @@ export default function HospitalAppointments() {
           </select>
         </div>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       <div className="card">
         <div className="card-header">

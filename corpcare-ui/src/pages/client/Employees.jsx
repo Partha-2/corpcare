@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 
 export default function ClientEmployees() {
   const [clients, setClients] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState('')
   const [employees, setEmployees] = useState([])
+  const [empLoading, setEmpLoading] = useState(false)
   const [selectedClient, setSelectedClient] = useState(null)
   const [form, setForm] = useState({ employeeCode: '', fullName: '', email: '', phone: '' })
-  const [msg, setMsg] = useState(null)
 
   useEffect(() => {
     api.get('/clients').then(r => {
@@ -16,14 +19,18 @@ export default function ClientEmployees() {
       if (r.data.data.length > 0) {
         setSelectedId(String(r.data.data[0].id))
         setSelectedClient(r.data.data[0])
-        load(r.data.data[0].id)
+        return load(r.data.data[0].id)
       }
+      setLoading(false)
     })
   }, [])
 
   const load = async (id) => {
+    setEmpLoading(true)
     const r = await api.get(`/clients/${id}/employees`)
     setEmployees(r.data.data)
+    setEmpLoading(false)
+    setLoading(false)
   }
 
   const handleClientChange = (id) => {
@@ -37,21 +44,22 @@ export default function ClientEmployees() {
     e.preventDefault()
     try {
       await api.post(`/clients/${selectedId}/employees`, form)
-      setMsg({ type: 'success', text: `✓ ${form.fullName} added` })
+      toast(`${form.fullName} added`)
       setForm({ employeeCode: '', fullName: '', email: '', phone: '' })
       load(selectedId)
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+      toast(err.response?.data?.message || 'Failed', 'error')
     }
   }
 
+  if (loading) return <Loading text="Loading employees..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <h1>Employees</h1>
         <p>Add and manage your workforce</p>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="flex-between">
@@ -97,7 +105,9 @@ export default function ClientEmployees() {
           <div className="card-header">
             <h2>👥 Employees <span className="badge">{employees.length}</span></h2>
           </div>
-          {employees.length === 0 ? (
+          {empLoading ? (
+            <Loading text="" />
+          ) : employees.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">👤</div>
               <p>No employees added yet</p>

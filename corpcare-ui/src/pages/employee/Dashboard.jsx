@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
 
 const SHIFTS = { MORNING_8_TO_4: '8AM-4PM', EVENING_4_TO_12: '4PM-12AM', NIGHT_12_TO_8: '12AM-8AM' }
 
@@ -9,11 +10,14 @@ export default function EmployeeDashboard() {
   const employee = JSON.parse(sessionStorage.getItem('employee') || '{}')
   const [vitals, setVitals] = useState(null)
   const [appointments, setAppointments] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!employee.id) { navigate('/employee/login'); return }
-    api.get(`/employees/${employee.id}/vitals`).then(r => setVitals(r.data.data)).catch(() => {})
-    api.get(`/appointments/employee/${employee.id}`).then(r => setAppointments(r.data.data)).catch(() => {})
+    Promise.all([
+      api.get(`/employees/${employee.id}/vitals`).then(r => setVitals(r.data.data)).catch(() => {}),
+      api.get(`/appointments/employee/${employee.id}`).then(r => setAppointments(r.data.data)).catch(() => {})
+    ]).finally(() => setLoading(false))
   }, [])
 
   const handleLogout = () => {
@@ -21,8 +25,10 @@ export default function EmployeeDashboard() {
     navigate('/employee/login')
   }
 
+  if (loading) return <Loading text="Loading dashboard..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="flex-between mb-16" style={{ alignItems: 'flex-start' }}>
         <div className="page-hdr" style={{ marginBottom: 0 }}>
           <h1>Welcome, {employee.fullName}</h1>

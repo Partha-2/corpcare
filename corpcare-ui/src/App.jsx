@@ -4,6 +4,7 @@ import AdminNav from './components/AdminNavbar'
 import ClientNav from './components/ClientNavbar'
 import HospitalNav from './components/HospitalNavbar'
 import EmployeeNav from './components/EmployeeNavbar'
+import ToastContainer from './components/Toast'
 import AdminLogin from './pages/admin/Login'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminClients from './pages/admin/Clients'
@@ -34,7 +35,9 @@ function Layout({ nav: Nav, children }) {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <ToastContainer />
+      <Routes>
       <Route path="/" element={<Landing />} />
 
       {/* Admin Login */}
@@ -63,6 +66,6 @@ export default function App() {
       <Route path="/employee/vitals" element={<Layout nav={EmployeeNav}><EmployeeVitals /></Layout>} />
       <Route path="/employee/book" element={<Layout nav={EmployeeNav}><EmployeeBook /></Layout>} />
       <Route path="/employee/appointments" element={<Layout nav={EmployeeNav}><EmployeeAppointments /></Layout>} />
-    </Routes>
-  )
+      </Routes>
+    </>  )
 }

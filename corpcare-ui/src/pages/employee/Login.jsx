@@ -24,14 +24,15 @@ export default function EmployeeLogin() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gray-50)', position: 'relative' }}>
-      <Link to="/" style={{ position: 'absolute', top: 24, left: 24, color: 'var(--gray-500)', textDecoration: 'none', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f172a, #1e3a5f)', position: 'relative' }}>
+      <Link to="/" style={{ position: 'absolute', top: 24, left: 24, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
         ← Back to Home
       </Link>
       <div className="card" style={{ width: 400, padding: 40 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link to="/" className="brand" style={{ fontSize: 22, fontWeight: 800, color: 'var(--gray-900)', textDecoration: 'none' }}>Corp<span style={{ color: 'var(--primary)' }}>Care</span></Link>
-          <p style={{ color: 'var(--gray-500)', fontSize: 14, marginTop: 8 }}>Employee Portal — Sign in to manage your health</p>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>👤</div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Employee Sign In</h2>
+          <p style={{ color: 'var(--gray-500)', fontSize: 14 }}>Use the credentials provided by your employer</p>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -49,10 +50,6 @@ export default function EmployeeLogin() {
             {loading ? 'Verifying...' : 'Sign In →'}
           </button>
         </form>
-
-        <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'var(--gray-400)' }}>
-          Use the credentials provided by your employer
-        </p>
       </div>
     </div>
   )

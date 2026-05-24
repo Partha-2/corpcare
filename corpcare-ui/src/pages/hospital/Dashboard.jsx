@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
 
 export default function HospitalDashboard() {
   const [hospitals, setHospitals] = useState([])
+  const [loading, setLoading] = useState(true)
   const [hospital, setHospital] = useState(null)
   const [stats, setStats] = useState({ total: 0, available: 0, booked: 0 })
 
@@ -25,6 +27,7 @@ export default function HospitalDashboard() {
         setHospital(r.data.data[0])
         loadStats(r.data.data[0].id)
       }
+      setLoading(false)
     })
   }, [])
 
@@ -36,8 +39,10 @@ export default function HospitalDashboard() {
 
   const pct = stats.total > 0 ? Math.round((stats.booked / stats.total) * 100) : 0
 
+  if (loading) return <Loading text="Loading hospital..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <div className="flex-between" style={{ alignItems: 'flex-start' }}>
           <div>

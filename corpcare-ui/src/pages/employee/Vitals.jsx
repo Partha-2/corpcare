@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 import bgLabels from '../../data/bloodGroups'
 
 export default function EmployeeVitals() {
   const navigate = useNavigate()
   const employee = JSON.parse(sessionStorage.getItem('employee') || '{}')
   const [vitals, setVitals] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ height: '', weight: '', bloodPressure: '', bloodSugar: '', bloodGroup: '' })
-  const [msg, setMsg] = useState(null)
 
   useEffect(() => {
     if (!employee.id) { navigate('/employee/login'); return }
@@ -16,7 +18,8 @@ export default function EmployeeVitals() {
       const v = r.data.data
       setVitals(v)
       setForm({ height: v.height, weight: v.weight, bloodPressure: v.bloodPressure, bloodSugar: v.bloodSugar, bloodGroup: v.bloodGroup })
-    }).catch(() => {})
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
   const handleSubmit = async (e) => {
@@ -26,19 +29,20 @@ export default function EmployeeVitals() {
         ...form, height: +form.height, weight: +form.weight, bloodSugar: +form.bloodSugar
       })
       setVitals(r.data.data)
-      setMsg({ type: 'success', text: '✓ Vitals updated' })
+      toast('Vitals updated')
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+      toast(err.response?.data?.message || 'Failed', 'error')
     }
   }
 
+  if (loading) return <Loading text="Loading vitals..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <h1>My Health Vitals</h1>
         <p>{employee.fullName}</p>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       <div className="flex" style={{ gap: 24, alignItems: 'flex-start' }}>
         <div className="card" style={{ flex: '0 0 400px' }}>

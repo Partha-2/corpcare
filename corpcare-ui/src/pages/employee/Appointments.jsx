@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 
 const SHIFTS = { MORNING_8_TO_4: '8AM-4PM', EVENING_4_TO_12: '4PM-12AM', NIGHT_12_TO_8: '12AM-8AM' }
 
@@ -8,32 +10,38 @@ export default function EmployeeAppointments() {
   const navigate = useNavigate()
   const employee = JSON.parse(sessionStorage.getItem('employee') || '{}')
   const [bookings, setBookings] = useState([])
-  const [msg, setMsg] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   const load = () => {
     if (!employee.id) { navigate('/employee/login'); return }
-    api.get(`/appointments/employee/${employee.id}`).then(r => setBookings(r.data.data)).catch(() => {})
+    api.get(`/appointments/employee/${employee.id}`).then(r => {
+      setBookings(r.data.data)
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }
 
   useEffect(load, [])
 
   const handleCancel = async (id) => {
+    if (!window.confirm('Cancel this appointment?')) return
     try {
       await api.put(`/appointments/${id}/cancel`)
-      setMsg({ type: 'success', text: '✓ Appointment cancelled' })
+      toast('Appointment cancelled')
       load()
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+      toast(err.response?.data?.message || 'Failed', 'error')
     }
   }
 
+  if (loading) return <Loading text="Loading appointments..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <h1>My Appointments</h1>
         <p>Your health checkup history</p>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
+
       <div className="card">
         <div className="card-header"><h2>📋 Appointments</h2></div>
         {bookings.length === 0 ? (

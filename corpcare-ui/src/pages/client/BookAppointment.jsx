@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 
 const SHIFTS = {
   MORNING_8_TO_4: '8AM-4PM',
@@ -11,10 +13,10 @@ export default function BookAppointment() {
   const [employees, setEmployees] = useState([])
   const [hospitals, setHospitals] = useState([])
   const [availableSlots, setAvailableSlots] = useState([])
+  const [slotLoading, setSlotLoading] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState('')
   const [selectedHospital, setSelectedHospital] = useState('')
   const [selectedSlot, setSelectedSlot] = useState('')
-  const [msg, setMsg] = useState(null)
   const [booked, setBooked] = useState(null)
 
   useEffect(() => {
@@ -32,18 +34,20 @@ export default function BookAppointment() {
   const loadSlots = async (hospitalId) => {
     setSelectedHospital(hospitalId)
     setSelectedSlot('')
+    setSlotLoading(true)
     const r = await api.get(`/hospitals/${hospitalId}/slots/available`)
     setAvailableSlots(r.data.data)
+    setSlotLoading(false)
   }
 
   const handleBook = async () => {
     try {
       const r = await api.post('/appointments', { employeeId: +selectedEmployee, slotId: +selectedSlot })
-      setMsg({ type: 'success', text: '✓ Appointment booked!' })
+      toast('Appointment booked!')
       setBooked(r.data.data)
       loadSlots(selectedHospital)
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Booking failed') })
+      toast(err.response?.data?.message || 'Booking failed', 'error')
     }
   }
 
@@ -52,15 +56,14 @@ export default function BookAppointment() {
   const selectedSlotData = availableSlots.find(s => s.id === +selectedSlot)
 
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <h1>Book Appointment</h1>
         <p>Schedule a health checkup for an employee</p>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       {booked && (
-        <div className="alert alert-success">
+        <div className="alert alert-success" style={{ marginBottom: 20 }}>
           ✅ <strong>Confirmed!</strong> {booked.slot?.slotDate} ({SHIFTS[booked.slot?.shiftType] || ''})
         </div>
       )}
@@ -93,11 +96,15 @@ export default function BookAppointment() {
               <div className="step-num">3</div>
               <div className="step-content">
                 <div className="step-label">Time Slot</div>
-                <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)} disabled={!selectedHospital} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: 14 }}>
-                  <option value="">Choose slot...</option>
-                  {availableSlots.map(s => <option key={s.id} value={s.id}>{s.slotDate} — {SHIFTS[s.shiftType] || s.shiftType}</option>)}
-                </select>
-                {selectedHospital && availableSlots.length === 0 && (
+                {slotLoading ? (
+                  <div style={{ padding: '10px 0', fontSize: 13, color: 'var(--gray-400)' }}>Loading slots...</div>
+                ) : (
+                  <select value={selectedSlot} onChange={e => setSelectedSlot(e.target.value)} disabled={!selectedHospital} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: 14 }}>
+                    <option value="">Choose slot...</option>
+                    {availableSlots.map(s => <option key={s.id} value={s.id}>{s.slotDate} — {SHIFTS[s.shiftType] || s.shiftType}</option>)}
+                  </select>
+                )}
+                {selectedHospital && !slotLoading && availableSlots.length === 0 && (
                   <p style={{ color: '#dc2626', fontSize: 13, marginTop: 6 }}>No slots available</p>
                 )}
               </div>

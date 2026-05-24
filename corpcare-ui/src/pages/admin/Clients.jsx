@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 
 export default function AdminClients() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState({})
   const [form, setForm] = useState({ companyName: '', contactEmail: '', contactPhone: '', maxEmployees: 100 })
-  const [msg, setMsg] = useState(null)
 
   useEffect(() => {
     api.get('/clients').then(r => {
@@ -29,12 +29,12 @@ export default function AdminClients() {
     e.preventDefault()
     try {
       await api.post('/clients', form)
-      setMsg({ type: 'success', text: `✓ ${form.companyName} registered` })
+      toast(`${form.companyName} registered`)
       setForm({ companyName: '', contactEmail: '', contactPhone: '', maxEmployees: 100 })
       const r = await api.get('/clients')
       setClients(r.data.data)
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+      toast(err.response?.data?.message || 'Failed', 'error')
     }
   }
 
@@ -46,7 +46,6 @@ export default function AdminClients() {
         <h1>All Clients</h1>
         <p>{clients.length} corporate clients registered</p>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       <div className="flex" style={{ gap: 24, alignItems: 'flex-start' }}>
         <div className="card" style={{ flex: '0 0 380px', maxWidth: '100%' }}>
@@ -125,12 +124,12 @@ export default function AdminClients() {
                 }
                 try {
                   await api.post(`/clients/${client.id}/employees`, payload)
-                  setMsg({ type: 'success', text: `✓ ${payload.fullName} added` })
+                  toast(`${payload.fullName} added`)
                   f.reset()
                   const r = await api.get(`/clients/${client.id}/employees`)
                   setExpanded(prev => ({ ...prev, [client.id]: r.data.data }))
                 } catch (err) {
-                  setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+                  toast(err.response?.data?.message || 'Failed', 'error')
                 }
               }}
               style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 12 }}

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 
 const BLOOD_GROUPS = ['A_POSITIVE','A_NEGATIVE','B_POSITIVE','B_NEGATIVE','O_POSITIVE','O_NEGATIVE','AB_POSITIVE','AB_NEGATIVE']
 const BG_LABELS = { A_POSITIVE: 'A+', A_NEGATIVE: 'A-', B_POSITIVE: 'B+', B_NEGATIVE: 'B-', O_POSITIVE: 'O+', O_NEGATIVE: 'O-', AB_POSITIVE: 'AB+', AB_NEGATIVE: 'AB-' }
@@ -8,15 +10,16 @@ const BG_LABELS = { A_POSITIVE: 'A+', A_NEGATIVE: 'A-', B_POSITIVE: 'B+', B_NEGA
 export default function EmployeeVitals() {
   const { employeeId } = useParams()
   const [vitals, setVitals] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ height: '', weight: '', bloodPressure: '', bloodSugar: '', bloodGroup: '' })
-  const [msg, setMsg] = useState(null)
 
   useEffect(() => {
     api.get(`/employees/${employeeId}/vitals`).then(r => {
       const v = r.data.data
       setVitals(v)
       setForm({ height: v.height, weight: v.weight, bloodPressure: v.bloodPressure, bloodSugar: v.bloodSugar, bloodGroup: v.bloodGroup })
-    }).catch(() => {})
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [employeeId])
 
   const handleSubmit = async (e) => {
@@ -26,20 +29,21 @@ export default function EmployeeVitals() {
         ...form, height: +form.height, weight: +form.weight, bloodSugar: +form.bloodSugar
       })
       setVitals(r.data.data)
-      setMsg({ type: 'success', text: '✓ Vitals saved successfully' })
+      toast('Vitals saved successfully')
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+      toast(err.response?.data?.message || 'Failed', 'error')
     }
   }
 
+  if (loading) return <Loading text="Loading vitals..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <Link to="/client/employees" style={{ color: 'var(--primary)', fontSize: 14, fontWeight: 500, textDecoration: 'none', marginBottom: 16, display: 'inline-block' }}>← Back to Employees</Link>
       <div className="page-hdr">
         <h1>Health Vitals</h1>
         <p>Record and view employee health information</p>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       <div className="flex" style={{ gap: 24, alignItems: 'flex-start' }}>
         <div className="card" style={{ flex: '0 0 400px' }}>

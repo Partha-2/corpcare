@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
+import Loading from '../../components/Loading'
+import { toast } from '../../components/Toast'
 
 const SHIFTS = {
   MORNING_8_TO_4: { label: 'Morning (8AM - 4PM)', short: '8AM-4PM' },
@@ -9,10 +11,10 @@ const SHIFTS = {
 
 export default function Slots() {
   const [hospitals, setHospitals] = useState([])
+  const [loading, setLoading] = useState(true)
   const [hospital, setHospital] = useState(null)
   const [slots, setSlots] = useState([])
   const [form, setForm] = useState({ slotDate: '', shiftType: 'MORNING_8_TO_4' })
-  const [msg, setMsg] = useState(null)
   const [view, setView] = useState('all')
 
   useEffect(() => {
@@ -22,13 +24,13 @@ export default function Slots() {
         setHospital(r.data.data[0])
         load(r.data.data[0].id)
       }
+      setLoading(false)
     })
   }, [])
 
   const handleHospitalChange = (id) => {
     const h = hospitals.find(x => x.id === +id)
     setHospital(h)
-    setMsg(null)
     if (h) load(h.id)
   }
 
@@ -38,11 +40,11 @@ export default function Slots() {
     e.preventDefault()
     try {
       await api.post(`/hospitals/${hospital.id}/slots`, form)
-      setMsg({ type: 'success', text: '✓ Slot created' })
+      toast('Slot created')
       setForm({ slotDate: '', shiftType: 'MORNING_8_TO_4' })
       load(hospital.id)
     } catch (err) {
-      setMsg({ type: 'error', text: '✗ ' + (err.response?.data?.message || 'Failed') })
+      toast(err.response?.data?.message || 'Failed', 'error')
     }
   }
 
@@ -50,8 +52,10 @@ export default function Slots() {
   const availCount = slots.filter(s => !s.isBooked).length
   const bookedCount = slots.length - availCount
 
+  if (loading) return <Loading text="Loading slots..." />
+
   return (
-    <div>
+    <div className="fade-in">
       <div className="page-hdr">
         <div className="flex-between" style={{ alignItems: 'flex-start' }}>
           <div>
@@ -63,7 +67,6 @@ export default function Slots() {
           </select>
         </div>
       </div>
-      {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
 
       <div className="stats-grid">
         <div className="stat-card">
