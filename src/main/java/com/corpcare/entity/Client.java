@@ -31,7 +31,7 @@ public class Client {
     @Column(nullable = false)
     private Integer maxEmployees = 100;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "varchar(255) default 'client123'")
     private String password = "client123";
 
     @Column(nullable = false, updatable = false)
@@ -66,7 +66,7 @@ public class Client {
     public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
     public Integer getMaxEmployees() { return maxEmployees; }
     public void setMaxEmployees(Integer maxEmployees) { this.maxEmployees = maxEmployees; }
-    public String getPassword() { return password; }
+    public String getPassword() { return password != null ? password : "client123"; }
     public void setPassword(String password) { this.password = password; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

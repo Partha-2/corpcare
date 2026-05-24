@@ -26,7 +26,7 @@ public class Hospital {
     @Column(nullable = false)
     private String contactEmail;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "varchar(255) default 'hospital123'")
     private String password = "hospital123";
 
     @Column(nullable = false, updatable = false)
@@ -58,7 +58,7 @@ public class Hospital {
     public void setCity(String city) { this.city = city; }
     public String getContactEmail() { return contactEmail; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
-    public String getPassword() { return password; }
+    public String getPassword() { return password != null ? password : "hospital123"; }
     public void setPassword(String password) { this.password = password; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
