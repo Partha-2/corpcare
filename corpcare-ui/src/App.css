@@ -565,6 +565,22 @@ button:disabled, .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: 
 }
 
 /* ============ CHAT BOT ============ */
+.chat-fab {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9998;
+  width: 56px; height: 56px; border-radius: 50%; border: none;
+  background: linear-gradient(135deg, #2563eb, #6366f1);
+  color: white; font-size: 24px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+  transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+}
+.chat-fab:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(37,99,235,0.5); }
+
+.dot-pulse::after {
+  content: '...'; animation: dots 1.2s steps(3) infinite;
+  font-size: 18px; letter-spacing: 2px; color: var(--gray-400);
+}
+@keyframes dots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
+
 .chat-panel {
   position: fixed; bottom: 88px; right: 24px; z-index: 9997;
   width: 380px; height: 520px; background: white;
