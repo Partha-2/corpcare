@@ -32,6 +32,8 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        fixEmptyPasswords();
+
         if (clientRepository.count() > 0) return;
 
         Client client = clientRepository.save(
@@ -56,5 +58,20 @@ public class DataSeeder implements CommandLineRunner {
         slotRepository.save(new AppointmentSlot(hospital, LocalDate.now().plusDays(1), ShiftType.EVENING_4_TO_12));
         slotRepository.save(new AppointmentSlot(hospital, LocalDate.now().plusDays(2), ShiftType.MORNING_8_TO_4));
         slotRepository.save(new AppointmentSlot(hospital, LocalDate.now().plusDays(2), ShiftType.NIGHT_12_TO_8));
+    }
+
+    private void fixEmptyPasswords() {
+        for (Client c : clientRepository.findAll()) {
+            if (c.getPassword() == null || c.getPassword().isEmpty()) {
+                c.setPassword("client123");
+                clientRepository.save(c);
+            }
+        }
+        for (Hospital h : hospitalRepository.findAll()) {
+            if (h.getPassword() == null || h.getPassword().isEmpty()) {
+                h.setPassword("hospital123");
+                hospitalRepository.save(h);
+            }
+        }
     }
 }
