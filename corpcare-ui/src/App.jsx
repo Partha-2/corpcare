@@ -1,9 +1,10 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
 import AdminNav from './components/AdminNavbar'
 import ClientNav from './components/ClientNavbar'
 import HospitalNav from './components/HospitalNavbar'
 import EmployeeNav from './components/EmployeeNavbar'
+import AdminLogin from './pages/admin/Login'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminClients from './pages/admin/Clients'
 import AdminHospitals from './pages/admin/Hospitals'
@@ -21,6 +22,12 @@ import EmployeeVitals from './pages/employee/Vitals'
 import EmployeeBook from './pages/employee/Book'
 import EmployeeAppointments from './pages/employee/Appointments'
 
+function ProtectedRoute({ children }) {
+  const authed = sessionStorage.getItem('admin_auth')
+  if (!authed) return <Navigate to="/admin/login" replace />
+  return children
+}
+
 function Layout({ nav: Nav, children }) {
   return (<>{Nav && <Nav />}<div className="container">{children}</div></>)
 }
@@ -30,10 +37,13 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
 
-      {/* Admin */}
-      <Route path="/admin" element={<Layout nav={AdminNav}><AdminDashboard /></Layout>} />
-      <Route path="/admin/clients" element={<Layout nav={AdminNav}><AdminClients /></Layout>} />
-      <Route path="/admin/hospitals" element={<Layout nav={AdminNav}><AdminHospitals /></Layout>} />
+      {/* Admin Login */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+
+      {/* Admin (protected) */}
+      <Route path="/admin" element={<ProtectedRoute><Layout nav={AdminNav}><AdminDashboard /></Layout></ProtectedRoute>} />
+      <Route path="/admin/clients" element={<ProtectedRoute><Layout nav={AdminNav}><AdminClients /></Layout></ProtectedRoute>} />
+      <Route path="/admin/hospitals" element={<ProtectedRoute><Layout nav={AdminNav}><AdminHospitals /></Layout></ProtectedRoute>} />
 
       {/* Client */}
       <Route path="/client" element={<Layout nav={ClientNav}><ClientDashboard /></Layout>} />

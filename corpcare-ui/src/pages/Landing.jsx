@@ -6,7 +6,7 @@ export default function Landing() {
       <nav className="landing-nav">
         <Link to="/" className="brand">Corp<span>Care</span></Link>
         <div className="nav-links">
-          <Link to="/admin">Admin</Link>
+          <Link to="/admin/login">Admin</Link>
           <Link to="/client">Client</Link>
           <Link to="/hospital">Hospital</Link>
           <Link to="/employee/login" className="login-btn">Employee Login</Link>
@@ -82,7 +82,7 @@ export default function Landing() {
 
       <section style={{ padding: '0 24px 80px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
-          <Link to="/admin" className="portal-card" style={{ borderTop: '4px solid #7c3aed' }}>
+          <Link to="/admin/login" className="portal-card" style={{ borderTop: '4px solid #7c3aed' }}>
             <div className="icon">⚙️</div>
             <h3>Admin Portal</h3>
             <p>Platform owner. Manage all clients, hospitals, and system-wide data.</p>
