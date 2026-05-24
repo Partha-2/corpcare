@@ -34,4 +34,10 @@ public class HospitalController {
         List<Hospital> hospitals = hospitalService.getAllHospitals();
         return ResponseEntity.ok(ApiResponse.success("Hospitals fetched successfully", hospitals));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteHospital(@PathVariable Long id) {
+        hospitalService.deleteHospital(id);
+        return ResponseEntity.ok(ApiResponse.success("Hospital deleted successfully", null));
+    }
 }

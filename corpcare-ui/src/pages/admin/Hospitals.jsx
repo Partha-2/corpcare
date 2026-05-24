@@ -76,7 +76,7 @@ export default function AdminHospitals() {
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Hospital</th><th>City</th><th>Email</th><th></th></tr>
+                  <tr><th>Hospital</th><th>City</th><th>Email</th><th></th><th></th></tr>
                 </thead>
                 <tbody>
                   {hospitals.map(h => (
@@ -88,6 +88,20 @@ export default function AdminHospitals() {
                         <span className="btn btn-sm btn-ghost" style={{ pointerEvents: 'none' }}>
                           {expanded[h.id] ? '▲' : '▼'} {expanded[h.id]?.length || 0}
                         </span>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <button className="btn btn-sm btn-danger" onClick={async () => {
+                          if (!window.confirm(`Delete ${h.hospitalName} and all slots?`)) return
+                          try {
+                            await api.delete(`/hospitals/${h.id}`)
+                            toast(`${h.hospitalName} deleted`)
+                            const r = await api.get('/hospitals')
+                            setHospitals(r.data.data)
+                            setExpanded(prev => ({ ...prev, [h.id]: null }))
+                          } catch (err) {
+                            toast(err.response?.data?.message || 'Failed', 'error')
+                          }
+                        }}>Delete</button>
                       </td>
                     </tr>
                   ))}

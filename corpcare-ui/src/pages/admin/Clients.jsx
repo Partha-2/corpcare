@@ -81,7 +81,7 @@ export default function AdminClients() {
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Company</th><th>Email</th><th>Phone</th><th>Max</th><th></th></tr>
+                  <tr><th>Company</th><th>Email</th><th>Phone</th><th>Max</th><th></th><th></th></tr>
                 </thead>
                 <tbody>
                   {clients.map(c => (
@@ -94,6 +94,20 @@ export default function AdminClients() {
                         <span className="btn btn-sm btn-ghost" style={{ pointerEvents: 'none' }}>
                           {expanded[c.id] ? '▲' : '▼'} {expanded[c.id]?.length || 0}
                         </span>
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <button className="btn btn-sm btn-danger" onClick={async () => {
+                          if (!window.confirm(`Delete ${c.companyName} and all employees?`)) return
+                          try {
+                            await api.delete(`/clients/${c.id}`)
+                            toast(`${c.companyName} deleted`)
+                            const r = await api.get('/clients')
+                            setClients(r.data.data)
+                            setExpanded(prev => ({ ...prev, [c.id]: null }))
+                          } catch (err) {
+                            toast(err.response?.data?.message || 'Failed', 'error')
+                          }
+                        }}>Delete</button>
                       </td>
                     </tr>
                   ))}

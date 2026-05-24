@@ -34,4 +34,10 @@ public class ClientController {
         List<Client> clients = clientService.getAllClients();
         return ResponseEntity.ok(ApiResponse.success("Clients fetched successfully", clients));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteClient(@PathVariable Long id) {
+        clientService.deleteClient(id);
+        return ResponseEntity.ok(ApiResponse.success("Client deleted successfully", null));
+    }
 }
