@@ -52,11 +52,11 @@ public class NotificationService {
     }
 
     private boolean isTwilioConfigured() {
-        return notBlank(twilioSid) && notBlank(twilioToken);
+        return notBlank(twilioSid) && notBlank(twilioToken) && notBlank(whatsappFrom);
     }
 
     private boolean isBolnaConfigured() {
-        return notBlank(bolnaApiKey) && !"YOUR_BOLNA_API_KEY".equals(bolnaApiKey);
+        return notBlank(bolnaApiKey) && !"YOUR_BOLNA_API_KEY".equals(bolnaApiKey) && notBlank(bolnaAgentId);
     }
 
     private boolean notBlank(String s) {
