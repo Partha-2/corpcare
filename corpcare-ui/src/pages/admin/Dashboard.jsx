@@ -8,32 +8,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      api.get('/clients'),
-      api.get('/hospitals')
-    ]).then(([c, h]) => {
-      const clients = c.data.data
-      const hospitals = h.data.data
-      let employees = 0
-      let slots = 0
-
-      const promises = []
-      clients.forEach(cl => {
-        promises.push(
-          api.get(`/clients/${cl.id}/employees`).then(r => { employees += r.data.data.length })
-        )
-      })
-      hospitals.forEach(ho => {
-        promises.push(
-          api.get(`/hospitals/${ho.id}/slots`).then(r => { slots += r.data.data.length })
-        )
-      })
-
-      Promise.all(promises).then(() => {
-        setStats({ clients: clients.length, hospitals: hospitals.length, employees, slots })
-        setLoading(false)
-      })
-    })
+    api.get('/stats').then(r => {
+      setStats(r.data.data)
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
   if (loading) return <Loading text="Loading dashboard..." />
