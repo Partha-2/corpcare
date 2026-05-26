@@ -20,6 +20,7 @@ export default function EmployeeNavbar() {
       <Link to="/employee/vitals" className={isActive('/employee/vitals')}>My Vitals</Link>
       <Link to="/employee/book" className={isActive('/employee/book')}>Book</Link>
       <Link to="/employee/appointments" className={isActive('/employee/appointments')}>Appointments</Link>
+      <Link to="/employee/report-analyzer" className={isActive('/employee/report-analyzer')}>🧪 Report Analyzer</Link>
       <div style={{ flex: 1 }} />
       <span style={{ fontSize: 13, color: 'var(--gray-500)', marginRight: 12 }}>{emp.fullName}</span>
       <button className="btn btn-sm btn-ghost" onClick={handleLogout}>Logout</button>

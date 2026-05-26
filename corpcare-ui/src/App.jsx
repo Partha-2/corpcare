@@ -28,6 +28,7 @@ import EmployeeVitals from './pages/employee/Vitals'
 import EmployeeBook from './pages/employee/Book'
 import EmployeeAppointments from './pages/employee/Appointments'
 import HealthReport from './pages/employee/HealthReport'
+import ReportAnalyzer from './pages/employee/ReportAnalyzer'
 
 function ProtectedRoute({ children, portal }) {
   const token = sessionStorage.getItem('token')
@@ -84,6 +85,7 @@ export default function App() {
       <Route path="/employee/book" element={<ProtectedRoute portal="employee"><Layout nav={EmployeeNav}><EmployeeBook /></Layout></ProtectedRoute>} />
       <Route path="/employee/appointments" element={<ProtectedRoute portal="employee"><Layout nav={EmployeeNav}><EmployeeAppointments /></Layout></ProtectedRoute>} />
       <Route path="/employee/health-report" element={<ProtectedRoute portal="employee"><Layout nav={EmployeeNav}><HealthReport /></Layout></ProtectedRoute>} />
+      <Route path="/employee/report-analyzer" element={<ProtectedRoute portal="employee"><Layout nav={EmployeeNav}><ReportAnalyzer /></Layout></ProtectedRoute>} />
       </Routes>
       </ErrorBoundary>
     </>  )
