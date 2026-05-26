@@ -24,74 +24,122 @@ public class ReportAnalyzerService {
 
     private static final Logger log = LoggerFactory.getLogger(ReportAnalyzerService.class);
 
-    private static class ParamDef {
-        final String name;
-        final String regex;
+    private static class PatternSet {
+        final List<Pattern> patterns;
         final String unit;
         final Double min;
         final Double max;
         final boolean qualitative;
+        final String name;
 
-        ParamDef(String name, String regex, String unit, Double min, Double max) {
+        PatternSet(String name, String unit, Double min, Double max, String... regexes) {
             this.name = name;
-            this.regex = regex;
             this.unit = unit;
             this.min = min;
             this.max = max;
             this.qualitative = false;
+            this.patterns = new ArrayList<>();
+            for (String r : regexes) {
+                this.patterns.add(Pattern.compile(r, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE));
+            }
         }
 
-        ParamDef(String name, String regex, String unit) {
+        PatternSet(String name, String unit, String... regexes) {
             this.name = name;
-            this.regex = regex;
             this.unit = unit;
             this.min = null;
             this.max = null;
             this.qualitative = true;
+            this.patterns = new ArrayList<>();
+            for (String r : regexes) {
+                this.patterns.add(Pattern.compile(r, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE));
+            }
         }
     }
 
-    private static final List<ParamDef> PARAMS = List.of(
-        new ParamDef("Haemoglobin",
-            "(?:haemoglobin|hemoglobin|hb)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "g/dL", 13.5, 17.5),
-        new ParamDef("RBC Count",
-            "(?:rbc\\s*count|rbcs\\s*count|red\\s*blood\\s*cells?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "milli./cu.mm", 4.5, 5.9),
-        new ParamDef("PCV / HCT",
-            "(?:packed\\s*cell\\s*volume|pcv|hct)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "%", 37.0, 53.0),
-        new ParamDef("MCV",
-            "(?:mean\\s*corpuscular\\s*volume|mcv)\\b\\s*[:.]?\\s*(\\d+\\.?\\d*)", "fL", 80.0, 100.0),
-        new ParamDef("MCH",
-            "(?:mean\\s*corpuscular\\s*hemoglobin|mch)\\b\\s*[:.]?\\s*(\\d+\\.?\\d*)", "pg", 26.0, 34.0),
-        new ParamDef("MCHC",
-            "(?:mchc|mean\\s*corpuscular\\s*hb\\s*conc)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "g/dL", 32.0, 36.0),
-        new ParamDef("RDW-CV",
-            "(?:rdw\\.?\\s*cv|rdw\\s+cv|rdw)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "%", 11.0, 16.0),
-        new ParamDef("Total WBC Count",
-            "(?:total\\s*wbc\\s*count|total\\s*wbcs?\\s*count|wbc\\s*count|white\\s*blood\\s*cells?)\\s*[:.]?\\s*(\\d[\\d,\\.]*)", "/cumm", 4500.0, 11000.0),
-        new ParamDef("Neutrophils",
-            "(?:neutrophils?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "%", 35.0, 75.0),
-        new ParamDef("Lymphocytes",
-            "(?:lymphocytes?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "%", 24.0, 44.0),
-        new ParamDef("Monocytes",
-            "(?:monocytes?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "%", 2.0, 12.0),
-        new ParamDef("Eosinophils",
-            "(?:eosinophils?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "%", 0.0, 6.0),
-        new ParamDef("Basophils",
-            "(?:basophils?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "%", 0.0, 1.0),
-        new ParamDef("Platelet Count",
-            "(?:platelet\\s*count)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "Lakh/cumm", 1.5, 4.5),
-        new ParamDef("ESR",
-            "(?:corrected\\s*esr|esr)\\b\\s*[:.]?\\s*(\\d+\\.?\\d*)", "mm/hr", 0.0, 15.0),
-        new ParamDef("Creatinine",
-            "(?:creatinine\\s*serum|creatinine)\\b\\s*[:.]?\\s*(\\d+\\.?\\d*)", "mg/dL", 0.5, 1.5),
-        new ParamDef("Urine Pus Cells",
-            "(?:pus\\s*cells?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "cells/HPF", 0.0, 5.0),
-        new ParamDef("Urine Protein",
-            "(?:protein)\\s*[:.]?\\s*(\\w+)", "qualitative"),
-        new ParamDef("Urine Sugar",
-            "(?:sugar|glucose)\\s*[:.]?\\s*(\\w+)", "qualitative"),
-        new ParamDef("Urine RBC",
-            "(?:red\\s*blood\\s*cells?|rbc)\\s*[:.]?\\s*(\\d+\\.?\\d*)", "cells/HPF", 0.0, 2.0)
+    private static final String NUM = "(\\d+(?:[.,]\\d+)?)";
+    private static final String QUAL = "(Nil|Absent|Negative|Normal|Present|Positive|Non-Reactive|\\d+)";
+    private static final String RANGE = "\\d+(?:[.,]\\d+)?\\s*[-\\u2013]\\s*\\d+(?:[.,]\\d+)?[^\\d]*?";
+
+    private static final List<PatternSet> PARAMS = List.of(
+        new PatternSet("Haemoglobin", "g/dL", 13.5, 17.5,
+            "(?:haemoglobin|hemoglobin|hb)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*(?:haemoglobin|hemoglobin|hb)\\b",
+            RANGE + NUM + "[ \\t]*(?:haemoglobin|hemoglobin|hb)\\b"),
+        new PatternSet("RBC Count", "milli./cu.mm", 4.5, 5.9,
+            "(?:rbc\\s*count|rbcs?|red\\s*blood\\s*cells?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*(?:rbc|rbcs?)\\b",
+            RANGE + NUM + "[ \\t]*(?:rbc|rbcs?|red\\s*blood\\s*cells?)\\b"),
+        new PatternSet("PCV / HCT", "%", 37.0, 53.0,
+            "(?:packed\\s*cell\\s*volume|pcv|hct)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*(?:pcv|hct|packed\\s*cell\\s*volume)\\b",
+            RANGE + NUM + "[ \\t]*(?:pcv|hct)\\b"),
+        new PatternSet("MCV", "fL", 80.0, 100.0,
+            "(?:mean\\s*corpuscular\\s*volume|mcv)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*mcv\\b",
+            RANGE + NUM + "[ \\t]*mcv\\b"),
+        new PatternSet("MCH", "pg", 26.0, 34.0,
+            "(?:mean\\s*corpuscular\\s*hemoglobin|mch)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*mch\\b",
+            RANGE + NUM + "[ \\t]*mch\\b"),
+        new PatternSet("MCHC", "g/dL", 32.0, 36.0,
+            "(?:mchc|mean\\s*corpuscular\\s*hb\\s*conc)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*mchc\\b",
+            RANGE + NUM + "[ \\t]*mchc\\b"),
+        new PatternSet("RDW-CV", "%", 11.0, 16.0,
+            "(?:rdw\\.?\\s*cv|rdw\\s+cv|rdw)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*rdw\\b",
+            RANGE + NUM + "[ \\t]*rdw\\b"),
+        new PatternSet("Total WBC Count", "/cumm", 4500.0, 11000.0,
+            "(?:total\\s*wbc\\s*count|wbcs?\\s*count|wbc|white\\s*blood\\s*cells?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*(?:wbc|wbcs?)\\b",
+            RANGE + NUM + "[ \\t]*(?:wbc|white\\s*blood)\\b"),
+        new PatternSet("Neutrophils", "%", 35.0, 75.0,
+            "(?:neutrophils?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*neutrophils?\\b",
+            RANGE + NUM + "[ \\t]*neutrophils?\\b"),
+        new PatternSet("Lymphocytes", "%", 24.0, 44.0,
+            "(?:lymphocytes?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*lymphocytes?\\b",
+            RANGE + NUM + "[ \\t]*lymphocytes?\\b"),
+        new PatternSet("Monocytes", "%", 2.0, 12.0,
+            "(?:monocytes?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*monocytes?\\b",
+            RANGE + NUM + "[ \\t]*monocytes?\\b"),
+        new PatternSet("Eosinophils", "%", 0.0, 6.0,
+            "(?:eosinophils?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*eosinophils?\\b",
+            RANGE + NUM + "[ \\t]*eosinophils?\\b"),
+        new PatternSet("Basophils", "%", 0.0, 1.0,
+            "(?:basophils?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*basophils?\\b",
+            RANGE + NUM + "[ \\t]*basophils?\\b"),
+        new PatternSet("Platelet Count", "Lakh/cumm", 1.5, 4.5,
+            "(?:platelet\\s*count|platelet)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*platelet\\b",
+            RANGE + NUM + "[ \\t]*platelet\\b"),
+        new PatternSet("ESR", "mm/hr", 0.0, 22.0,
+            "(?:corrected\\s*esr|esr)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*esr\\b",
+            RANGE + NUM + "[ \\t]*esr\\b"),
+        new PatternSet("Creatinine", "mg/dL", 0.5, 1.5,
+            "(?:creatinine\\s*serum|creatinine)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*creatinine\\b",
+            RANGE + NUM + "[ \\t]*creatinine\\b"),
+        new PatternSet("Urine Pus Cells", "cells/HPF", 0.0, 5.0,
+            "(?:urine\\s*pus\\s*cells?|pus\\s*cells?)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*pus\\s*cells?\\b",
+            RANGE + NUM + "[ \\t]*pus\\s*cells?\\b"),
+        new PatternSet("Urine Protein", "qualitative",
+            "(?:urine\\s*protein|protein)\\s*[:.]?\\s*.*?" + QUAL,
+            QUAL + "[ \\t]*protein\\b"),
+        new PatternSet("Urine Sugar", "qualitative",
+            "(?:urine\\s*sugar|sugar|glucose)\\s*[:.]?\\s*.*?" + QUAL,
+            QUAL + "[ \\t]*(?:sugar|glucose)\\b"),
+        new PatternSet("Urine RBC", "cells/HPF", 0.0, 2.0,
+            "(?:red\\s*blood\\s*cells?|urine\\s*rbc|rbc)\\s*[:.]?\\s*.*?" + NUM,
+            NUM + "[ \\t]*rbc\\b",
+            RANGE + NUM + "[ \\t]*rbc\\b")
     );
 
     public ReportAnalysisResult analyze(byte[] fileBytes) throws Exception {
@@ -133,17 +181,16 @@ public class ReportAnalyzerService {
         result.setVendor(detectVendor(text));
 
         PatientInfo patient = new PatientInfo();
-        patient.setName(extractGroup(text, "(?:name|patient\\s*name|patient)\\s*[:.]?\\s*([A-Za-z\\s.]+)", 1));
-        patient.setAge(extractGroup(text, "(?:age)\\s*[:.]?\\s*(\\d{1,3})", 1));
-        patient.setSex(extractGroup(text, "(?:sex|gender)\\s*[:.]?\\s*(male|female|m|f)", 1));
-        patient.setDate(extractGroup(text,
-            "(?:date|report\\s*date|collected|collection\\s*date)\\s*[:.]?\\s*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", 1));
+        patient.setName(extractName(text));
+        patient.setAge(extractAge(text));
+        patient.setSex(extractSex(text));
+        patient.setDate(extractDate(text));
         result.setPatient(patient);
 
         int parsed = 0;
         List<AlertItem> alerts = new ArrayList<>();
 
-        for (ParamDef def : PARAMS) {
+        for (PatternSet def : PARAMS) {
             ParameterResult pr = parseParameter(text, def);
             result.getParameters().add(pr);
             if (!"NOT_FOUND".equals(pr.getStatus())) {
@@ -153,13 +200,14 @@ public class ReportAnalyzerService {
                 AlertItem alert = new AlertItem();
                 alert.setParameter(pr.getName());
                 alert.setValue(pr.getValue());
-                alert.setRange(pr.getRangeMin() != null ? pr.getRangeMin() + "–" + pr.getRangeMax() : "N/A");
-                String dir = "HIGH".equals(pr.getStatus()) ? "High" : "LOW".equals(pr.getStatus()) ? "Low" : "Abnormal";
-                alert.setDirection(dir);
+                alert.setRange(pr.getRangeMin() != null ? pr.getRangeMin() + "\u2013" + pr.getRangeMax() : "N/A");
+                boolean high = "HIGH".equals(pr.getStatus());
+                alert.setDirection(high ? "Impossible" : "Too Low");
                 String unit = pr.getUnit() != null ? " " + pr.getUnit() : "";
-                alert.setMessage("⚠️ " + pr.getName() + " is " + dir + ": " + pr.getValue() +
-                    unit + " (expected " + (pr.getRangeMin() != null ? pr.getRangeMin() + "–" + pr.getRangeMax() : "N/A") +
-                    "). Please consult a doctor.");
+                alert.setMessage("\u26A0\uFE0F " + pr.getName() + " is " +
+                    (high ? "Impossible / Too High" : "Very Low / Too Low") + ": " + pr.getValue() +
+                    unit + " (expected " + (pr.getRangeMin() != null ? pr.getRangeMin() + "\u2013" + pr.getRangeMax() : "N/A") +
+                    "). " + (high ? "Immediate medical attention recommended." : "Please consult a doctor."));
                 alerts.add(alert);
             }
         }
@@ -174,6 +222,56 @@ public class ReportAnalyzerService {
         return result;
     }
 
+    private String extractName(String text) {
+        for (String regex : new String[]{
+            "(?:patient\\s*name|patient|name)\\s*[:.]?\\s*([A-Za-z\\s.]+?)(?:\\s*(?:age|sex|gender|date|ref|sample))",
+            "([A-Z][a-z]+\\s+[A-Z][a-z]+)"}) {
+            Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+            Matcher m = p.matcher(text);
+            if (m.find()) {
+                String n = m.group(1).trim();
+                if (n.length() > 2) return n;
+            }
+        }
+        return "";
+    }
+
+    private String extractAge(String text) {
+        for (String regex : new String[]{
+            "age\\s*[:.]?\\s*(\\d{1,3})",
+            "(\\d{1,3})\\s*(?:yrs?|years?|yr)\\b"}) {
+            Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+            Matcher m = p.matcher(text);
+            if (m.find()) return m.group(1);
+        }
+        return "";
+    }
+
+    private String extractSex(String text) {
+        for (String regex : new String[]{
+            "(?:sex|gender)\\s*[:.]?\\s*(Male|Female|M|F)",
+            "\\b(Male|Female)\\b",
+            "\\b(M|F)\\b(?!\\s*[:.])"}) {
+            Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+            Matcher m = p.matcher(text);
+            if (m.find()) {
+                String s = m.group(1).toUpperCase();
+                if ("M".equals(s)) return "Male";
+                if ("F".equals(s)) return "Female";
+                return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+            }
+        }
+        return "";
+    }
+
+    private String extractDate(String text) {
+        Pattern p = Pattern.compile(
+            "(?:date|report\\s*date|collected|collection\\s*date)\\s*[:.]?\\s*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        Matcher m = p.matcher(text);
+        return m.find() ? m.group(1).trim() : "";
+    }
+
     private String detectVendor(String text) {
         String upper = text.toUpperCase();
         if (upper.contains("SHIVANI")) return "Shivani Diagnostic Centre";
@@ -181,40 +279,46 @@ public class ReportAnalyzerService {
         return "Unknown";
     }
 
-    private ParameterResult parseParameter(String text, ParamDef def) {
+    private ParameterResult parseParameter(String text, PatternSet def) {
         ParameterResult pr = new ParameterResult();
         pr.setName(def.name);
         pr.setUnit(def.unit);
         pr.setRangeMin(def.min);
         pr.setRangeMax(def.max);
 
-        Pattern p = Pattern.compile(def.regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
+        String matchedValue = null;
+        for (Pattern p : def.patterns) {
+            Matcher m = p.matcher(text);
+            if (m.find()) {
+                matchedValue = m.group(1).trim();
+                break;
+            }
+        }
 
-        if (!m.find()) {
+        if (matchedValue == null || matchedValue.isEmpty()) {
             pr.setStatus("NOT_FOUND");
             pr.setValue("");
             return pr;
         }
 
-        String raw = m.group(1).trim();
-        pr.setRawText(raw);
+        String cleaned = cleanValue(matchedValue);
+        pr.setRawText(matchedValue);
 
         if (def.qualitative) {
-            String lower = raw.toLowerCase();
-            if ("nil".equals(lower) || "absent".equals(lower) || "negative".equals(lower)) {
-                pr.setValue(raw);
+            String lower = cleaned.toLowerCase();
+            if ("nil".equals(lower) || "absent".equals(lower) || "negative".equals(lower) || "normal".equals(lower)) {
+                pr.setValue(cleaned);
                 pr.setStatus("NORMAL");
             } else {
-                pr.setValue(raw);
+                pr.setValue(cleaned);
                 pr.setStatus("ABNORMAL");
             }
             return pr;
         }
 
         try {
-            String cleaned = raw.replaceAll(",", "");
-            double val = Double.parseDouble(cleaned);
+            String numeric = cleaned.replaceAll(",", "");
+            double val = Double.parseDouble(numeric);
             pr.setValue(cleaned);
 
             if (val < def.min) {
@@ -225,16 +329,16 @@ public class ReportAnalyzerService {
                 pr.setStatus("NORMAL");
             }
         } catch (NumberFormatException e) {
-            pr.setValue(raw);
+            pr.setValue(cleaned);
             pr.setStatus("NOT_FOUND");
         }
 
         return pr;
     }
 
-    private String extractGroup(String text, String regex, int group) {
-        Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        return m.find() ? m.group(group).trim() : "";
+    private String cleanValue(String v) {
+        if (v == null || v.isBlank()) return v;
+        String cleaned = v.replaceAll("[^\\d.,A-Za-z+\\-].*$", "").trim();
+        return cleaned.isBlank() ? v.split("\\s+")[0] : cleaned;
     }
 }
