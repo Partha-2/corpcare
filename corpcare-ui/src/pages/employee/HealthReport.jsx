@@ -1,7 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
+import VendorBadge from '../../components/VendorBadge'
+import HealthStatusTable from '../../components/HealthStatusTable'
+import AlertNotification from '../../components/AlertNotification'
+import { toast } from '../../components/Toast'
 
 export default function HealthReport() {
   const [file, setFile] = useState(null)
@@ -11,7 +15,7 @@ export default function HealthReport() {
   const [error, setError] = useState('')
   const inputRef = useRef(null)
 
-  const handleDrop = (e) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault()
     setDragOver(false)
     const f = e.dataTransfer.files[0]
@@ -22,18 +26,18 @@ export default function HealthReport() {
     } else {
       setError('Please drop a valid PDF file')
     }
-  }
+  }, [])
 
-  const handleSelect = (e) => {
+  const handleSelect = useCallback((e) => {
     const f = e.target.files[0]
     if (f) {
       setFile(f)
       setError('')
       setResult(null)
     }
-  }
+  }, [])
 
-  const handleUpload = async () => {
+  const handleUpload = useCallback(async () => {
     if (!file) return
     setLoading(true)
     setError('')
@@ -41,64 +45,78 @@ export default function HealthReport() {
     try {
       const form = new FormData()
       form.append('file', file)
-      const r = await api.post('/health-report/analyze', form, {
+      const r = await api.post('/health/analyze', form, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
-      setResult(r.data.data)
+      const data = r.data.data
+      setResult(data)
+      for (const n of (data.notifications || [])) {
+        toast(n, n.startsWith('Critical') ? 'error' : 'warning')
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Analysis failed')
     } finally {
       setLoading(false)
     }
-  }
+  }, [file])
 
-  const statusClass = (val) => {
-    if (val === 'Normal' || val === 'Healthy') return 'status-available'
-    if (val === 'High' || val === 'Low' || val === 'Above Required Range' || val === 'Below Required Range' || val === 'Above Healthy Range' || val === 'Below Healthy Range') return 'status-booked'
-    return ''
-  }
+  const downloadReport = useCallback(() => {
+    if (!result) return
+    const params = result.parameters || []
+    const parts = [
+      '---------------------------------------',
+      'EMPLOYEE HEALTH ANALYSIS REPORT',
+      '---------------------------------------',
+      '',
+      'Vendor Format Detected: ' + (result.vendorFormat || 'N/A'),
+      '',
+      'Employee Details:',
+      'Name: ' + (result.employeeName || 'N/A'),
+      'Age: ' + (result.age || 'N/A'),
+      'Sex: ' + (result.sex || 'N/A'),
+      'Blood Group: ' + (result.bloodGroup || 'N/A'),
+      '',
+      'Health Parameters:',
+      '--------------------------------------------------------------------',
+      padStr('Parameter', 25) + padStr('Current Value', 18) + padStr('Range', 18) + 'Status',
+      '--------------------------------------------------------------------'
+    ]
+    for (const p of params) {
+      if (p.status === 'NOT_AVAILABLE') continue
+      const val = p.value + (p.unit ? ' ' + p.unit : '')
+      const range = p.referenceRange || '-'
+      parts.push(padStr(p.name, 25) + padStr(val, 18) + padStr(range, 18) + (p.status || ''))
+    }
+    parts.push('--------------------------------------------------------------------')
+    parts.push('')
+    parts.push('Recommendations:')
+    for (const p of params) {
+      if (p.status !== 'NORMAL' && p.status !== 'NOT_AVAILABLE' && p.recommendation) {
+        parts.push('- ' + p.name + ': ' + p.recommendation)
+      }
+    }
+    parts.push('')
+    parts.push('--- End of Report ---')
+    const blob = new Blob([parts.join('\n')], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Health_Report_${result.employeeName || 'Employee'}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [result])
 
-  const fields = result ? [
-    { label: 'Name', value: result.name },
-    { label: 'Age', value: result.age + ' yrs' },
-    { label: 'Sex', value: result.sex },
-    { label: 'Blood Group', value: result.bloodGroup },
-    { label: 'Height', value: result.height + ' cm', status: result.heightStatus },
-    { label: 'Weight', value: result.weight + ' kg', status: result.weightStatus },
-    { label: 'BMI', value: result.bmi, status: result.bmi && result.bmi !== 'N/A' ? (parseFloat(result.bmi) < 18.5 || parseFloat(result.bmi) > 24.9 ? 'High' : 'Normal') : '' },
-    { label: 'BP Systolic', value: result.bloodPressureSystolic + ' mmHg', status: result.bpStatus },
-    { label: 'BP Diastolic', value: result.bloodPressureDiastolic + ' mmHg' },
-    { label: 'Blood Sugar (Fasting)', value: result.bloodSugarFasting + ' mg/dL', status: result.sugarStatus },
-    { label: 'Blood Sugar (PP)', value: result.bloodSugarPostPrandial + ' mg/dL' },
-    { label: 'Blood Sugar (Random)', value: result.bloodSugarRandom + ' mg/dL' },
-    { label: 'Hemoglobin', value: result.hemoglobin + ' g/dL', status: result.hemoglobinStatus },
-    { label: 'RBC Count', value: result.rbcCount + ' M/μL' },
-    { label: 'WBC Count', value: result.wbcCount + ' /μL' },
-    { label: 'Platelet Count', value: result.plateletCount + ' /μL' },
-    { label: 'Total Cholesterol', value: result.totalCholesterol + ' mg/dL', status: result.cholesterolStatus },
-    { label: 'HDL Cholesterol', value: result.hdlCholesterol + ' mg/dL' },
-    { label: 'LDL Cholesterol', value: result.ldlCholesterol + ' mg/dL' },
-    { label: 'Triglycerides', value: result.triglycerides + ' mg/dL' },
-    { label: 'Serum Creatinine', value: result.serumCreatinine + ' mg/dL', status: result.creatinineStatus },
-    { label: 'Urea', value: result.urea + ' mg/dL' },
-    { label: 'Uric Acid', value: result.uricAcid + ' mg/dL' },
-    { label: 'Pulse Rate', value: result.pulseRate + ' bpm' },
-    { label: 'Oxygen Saturation', value: result.oxygenSaturation + ' %' },
-    { label: 'Temperature', value: result.temperature + ' °F' },
-    { label: 'Vitamin D', value: result.vitaminD + ' ng/mL' },
-    { label: 'Vitamin B12', value: result.vitaminB12 + ' pg/mL' },
-    { label: 'TSH', value: result.tsh + ' μIU/mL' },
-    { label: 'ESR', value: result.esr + ' mm/hr' },
-    { label: 'Total Bilirubin', value: result.totalBilirubin + ' mg/dL' },
-    { label: 'Total Protein', value: result.totalProtein + ' g/dL' }
-  ].filter(f => f.value && f.value !== 'N/A' && f.value !== 'undefined N/A') : []
+  function padStr(s, len) {
+    s = String(s || '')
+    return s.length < len ? s + ' '.repeat(len - s.length) : s.substring(0, len)
+  }
 
   return (
     <div className="fade-in">
       <div className="page-hdr">
         <Link to="/employee/dashboard" style={{ fontSize: 13, color: 'var(--primary)', textDecoration: 'none', display: 'block', marginBottom: 8 }}>← Back to Dashboard</Link>
-        <h1>📄 Health Report Analysis</h1>
-        <p>Upload your medical PDF report to extract and analyze health parameters</p>
+        <h1>🧬 Advanced Health Report Analyzer</h1>
+        <p>AI-Based Multi Vendor PDF Analysis — Drag and drop your medical report</p>
       </div>
 
       {!result && (
@@ -116,15 +134,15 @@ export default function HealthReport() {
           onClick={() => inputRef.current?.click()}
         >
           <input ref={inputRef} type="file" accept=".pdf" onChange={handleSelect} style={{ display: 'none' }} />
-          <div style={{ fontSize: 48, marginBottom: 12 }}>{file ? '📎' : '📄'}</div>
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+          <div style={{ fontSize: 56, marginBottom: 12 }}>{file ? '📎' : '📄'}</div>
+          <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
             {file ? file.name : 'Drag & drop your PDF report here'}
           </h3>
           <p style={{ fontSize: 13, color: 'var(--text-3)' }}>
             {file ? `${(file.size / 1024).toFixed(1)} KB` : 'or click to browse — PDF only'}
           </p>
           {file && (
-            <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <div style={{ marginTop: 20, display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button className="btn btn-green" onClick={e => { e.stopPropagation(); handleUpload() }} disabled={loading}>
                 {loading ? 'Analyzing...' : '🔍 Analyze Report'}
               </button>
@@ -142,49 +160,47 @@ export default function HealthReport() {
       {result && (
         <>
           <div className="card" style={{ background: 'linear-gradient(135deg, var(--surface), #1a2a4a)', border: '1px solid var(--surface-2)', marginTop: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <AlertNotification notifications={result.notifications || []} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 700 }}>🧬 Health Report Summary</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>AI-extracted from your uploaded PDF</p>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>AI-extracted & vendor-matched from your uploaded PDF</p>
               </div>
-              <button className="btn btn-ghost" onClick={() => { setResult(null); setFile(null) }}>Upload New</button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <VendorBadge vendorFormat={result.vendorFormat} />
+                <button className="btn btn-ghost" onClick={downloadReport} style={{ fontSize: 12 }}>⬇ Download Report</button>
+                <button className="btn btn-ghost" onClick={() => { setResult(null); setFile(null) }} style={{ fontSize: 12 }}>Upload New</button>
+              </div>
             </div>
 
-            <div className="stats-grid" style={{ marginBottom: 20 }}>
-              {result.recommendedWeightMin !== 'N/A' && (
-                <div className="stat-card" style={{ gridColumn: 'span 3' }}>
-                  <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 4 }}>Recommended Weight Range</div>
-                  <div style={{ fontSize: 20, fontWeight: 700 }}>{result.recommendedWeightMin} — {result.recommendedWeightMax} kg</div>
-                </div>
+            <div style={{
+              display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16,
+              padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)'
+            }}>
+              {result.employeeName !== 'Not Available' && (
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}><strong>Name:</strong> {result.employeeName}</span>
+              )}
+              {result.age !== 'Not Available' && (
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}><strong>Age:</strong> {result.age}</span>
+              )}
+              {result.sex !== 'Not Available' && (
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}><strong>Sex:</strong> {result.sex}</span>
+              )}
+              {result.bloodGroup !== 'Not Available' && (
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}><strong>Blood Group:</strong> {result.bloodGroup}</span>
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
-              {fields.map((f, i) => (
-                <div key={i} style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid var(--surface-2)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '10px 14px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  gap: 8
-                }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.3px', fontWeight: 600 }}>{f.label}</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, marginTop: 2 }}>{f.value}</div>
-                  </div>
-                  {f.status && (
-                    <span className={`status-badge ${statusClass(f.status)}`} style={{ fontSize: 11, whiteSpace: 'nowrap' }}>● {f.status}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+            <HealthStatusTable parameters={result.parameters || []} />
           </div>
 
           <div className="card" style={{ marginTop: 16 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>⚠️ Disclaimer</h2>
             <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.8 }}>
-              This is an AI-assisted analysis for informational purposes only. Values are extracted automatically from your PDF report and may contain errors. Always consult a qualified healthcare professional for medical advice, diagnosis, or treatment.
+              This is an AI-assisted analysis for informational purposes only. Values are automatically extracted from your
+              uploaded PDF based on vendor template matching. Range classifications and recommendations are based on standard
+              medical reference ranges. Always consult a qualified healthcare professional for medical advice, diagnosis, or treatment.
             </p>
           </div>
         </>
