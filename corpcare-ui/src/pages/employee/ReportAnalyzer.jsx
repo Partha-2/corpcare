@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
@@ -18,7 +18,30 @@ export default function ReportAnalyzer() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
+  const [history, setHistory] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(true)
   const inputRef = useRef(null)
+
+  useEffect(() => { loadHistory() }, [])
+
+  const loadHistory = async () => {
+    try {
+      const r = await api.get('/report-analyzer/history')
+      setHistory(r.data || [])
+    } catch { /* not logged in */ }
+    finally { setHistoryLoading(false) }
+  }
+
+  const viewPast = async (id) => {
+    try {
+      const r = await api.get(`/report-analyzer/history/${id}`)
+      const data = JSON.parse(r.data.reportData || '{}')
+      data._pastFileName = r.data.fileName
+      data._pastDate = r.data.createdAt
+      setResult(data)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch { toast('Failed to load past report', 'error') }
+  }
 
   const handleDrop = (e) => {
     e.preventDefault()
@@ -71,6 +94,43 @@ export default function ReportAnalyzer() {
       </div>
 
       {!result && (
+        <>
+        {/* Past Reports */}
+        {!historyLoading && history.length > 0 && (
+          <div className="card" style={{ marginBottom: 16 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>📋 Past Reports</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {history.map(h => (
+                <div key={h.id} onClick={() => viewPast(h.id)} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                  background: 'var(--surface-2)', cursor: 'pointer',
+                  fontSize: 13, transition: 'background 0.2s'
+                }} onMouseOver={e => e.currentTarget.style.background = 'var(--surface-3)'}
+                   onMouseOut={e => e.currentTarget.style.background = 'var(--surface-2)'}>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{h.fileName || 'Report'}</div>
+                    <div style={{ color: 'var(--text-3)', fontSize: 12 }}>
+                      {h.patientName && `${h.patientName} · `}{h.vendor} · {h.parsedCount}/20
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--text-3)' }}>
+                    <div>{h.createdAt ? new Date(h.createdAt).toLocaleDateString() : ''}</div>
+                    <span style={{
+                      display: 'inline-block', marginTop: 2, padding: '1px 8px', borderRadius: 10,
+                      fontSize: 11, fontWeight: 600,
+                      background: h.confidence === 'High' ? 'rgba(5,150,105,0.1)' :
+                                 h.confidence === 'Medium' ? 'rgba(217,119,6,0.1)' : 'rgba(100,116,139,0.1)',
+                      color: h.confidence === 'High' ? '#059669' :
+                             h.confidence === 'Medium' ? '#d97706' : '#64748b'
+                    }}>{h.confidence}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div
           className="card"
           onDragOver={e => { e.preventDefault(); setDragOver(true) }}
@@ -101,7 +161,8 @@ export default function ReportAnalyzer() {
             </div>
           )}
           {loading && <div style={{ marginTop: 16 }}><Loading text="" /></div>}
-        </div>
+          </div>
+        </>
       )}
 
       {error && <div className="alert alert-error" style={{ marginTop: 16 }}>{error}</div>}
@@ -132,6 +193,13 @@ export default function ReportAnalyzer() {
                 <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>✅ Parameters Parsed</div>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>{result.parsedCount}/20</div>
               </div>
+              {result._pastFileName && (
+                <div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>📁 Past Report</div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{result._pastFileName}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{result._pastDate ? new Date(result._pastDate).toLocaleString() : ''}</div>
+                </div>
+              )}
             </div>
             {result.patient && (result.patient.name || result.patient.age || result.patient.sex) && (
               <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 13 }}>
