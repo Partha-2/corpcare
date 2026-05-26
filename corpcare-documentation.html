@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CorpCare — Documentation & Interview Guide</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #334155;
+  --border: #1e293b;
+  --text: #f1f5f9;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --purple: #8b5cf6;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+/* HEADER */
+.header {
+  padding: 40px 0 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.logo {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--accent), #1d4ed8);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+.header h1 span { color: var(--accent); }
+.header .subtitle { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-print {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--surface-2); cursor: pointer;
+  font-size: 13px; font-weight: 500; transition: all .2s;
+  text-decoration: none;
+}
+.btn-print:hover { background: var(--surface-2); }
+
+/* NAV */
+.nav {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  padding: 16px 0; border-bottom: 1px solid var(--border);
+  margin-bottom: 32px; position: sticky; top: 0;
+  background: var(--bg); z-index: 10;
+}
+.nav a {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 500; color: var(--text-2);
+  text-decoration: none; transition: all .2s;
+  white-space: nowrap;
+}
+.nav a:hover, .nav a.active { background: var(--accent-glow); color: var(--accent); }
+
+/* SECTIONS */
+.section { margin-bottom: 48px; }
+.section-title {
+  font-size: 20px; font-weight: 700; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title .num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.section-sub { font-size: 14px; color: var(--text-3); margin-bottom: 20px; }
+
+/* CARDS */
+.card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 16px;
+  border: 1px solid transparent;
+  transition: border-color .2s;
+}
+.card:hover { border-color: var(--surface-2); }
+.card-title {
+  font-size: 15px; font-weight: 600; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-text { font-size: 14px; color: var(--text-2); line-height: 1.8; }
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* TABLES */
+.table-wrap { overflow-x: auto; margin: 12px 0; }
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  text-align: left; padding: 10px 14px;
+  background: var(--surface-2); color: var(--text);
+  font-weight: 600; white-space: nowrap;
+}
+th:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+th:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text-2); }
+td:first-child { font-weight: 600; color: var(--accent); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+.badge-blue { background: var(--accent-glow); color: var(--accent); }
+.badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+.badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+/* CODE */
+.code-block {
+  background: #0d1117; border-radius: var(--radius-sm);
+  padding: 18px 20px; margin: 12px 0;
+  overflow-x: auto; font-size: 13px; line-height: 1.7;
+  border: 1px solid #1e2d3d;
+}
+.code-block pre {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+  white-space: pre; tab-size: 2;
+}
+.code-block .comment { color: #8b949e; }
+.code-block .keyword { color: #ff7b72; }
+.code-block .string { color: #a5d6ff; }
+.code-block .type { color: #ffa657; }
+.code-block .method { color: #d2a8ff; }
+.code-block .annotation { color: #79c0ff; }
+.code-block .number { color: #79c0ff; }
+.code-block .op { color: #ff7b72; }
+.code-desc {
+  font-size: 13px; color: var(--text-2); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.code-desc strong { color: var(--text); }
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.code-file {
+  font-size: 12px; color: var(--accent);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-weight: 500;
+}
+.code-copy {
+  font-size: 11px; color: var(--text-3); cursor: pointer;
+  background: none; border: 1px solid var(--surface-2);
+  padding: 3px 10px; border-radius: 4px;
+  transition: all .2s;
+}
+.code-copy:hover { background: var(--surface-2); color: var(--text); }
+@media print {
+  .code-block { background: #f1f5f9; border-color: #e2e8f0; }
+  .code-block .comment { color: #6b7280; }
+  .code-block .keyword { color: #dc2626; }
+  .code-block .string { color: #2563eb; }
+  .code-block .type { color: #d97706; }
+  .code-block .method { color: #7c3aed; }
+  .code-block .annotation { color: #2563eb; }
+  .code-block .number { color: #2563eb; }
+  .code-block .op { color: #dc2626; }
+  .code-copy { display: none; }
+  .code-file { color: #2563eb; }
+}
+
+/* FLOW */
+.flow { counter-reset: step; }
+.flow-item {
+  display: flex; gap: 16px; padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.flow-item:last-child { border-bottom: none; }
+.flow-num {
+  counter-increment: step;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent-glow); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+  position: relative;
+}
+.flow-item:not(:last-child) .flow-num::after {
+  content: ''; position: absolute; top: 32px; left: 50%;
+  width: 2px; height: calc(100% + 0px);
+  background: var(--surface-2);
+}
+.flow-content h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.flow-content p { font-size: 13px; color: var(--text-2); line-height: 1.7; }
+
+/* FEATURE CARDS */
+.feature-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 12px;
+}
+.feature-card .card-title { font-size: 14px; }
+
+/* ISSUE CARDS */
+.issue-card { border-left: 3px solid var(--amber); }
+.issue-card .card-text strong { color: var(--text); display: inline-block; min-width: 60px; }
+
+/* ACCORDION */
+.accordion { margin-bottom: 12px; }
+.accordion-btn {
+  width: 100%; text-align: left; padding: 16px 20px;
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-radius: var(--radius); cursor: pointer;
+  color: var(--text); font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; gap: 12px;
+  transition: all .2s;
+}
+.accordion-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+.accordion-btn .icon {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent-glow); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 12px; font-weight: 700;
+  transition: transform .3s;
+}
+.accordion-btn.open .icon { transform: rotate(45deg); }
+.accordion-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height .35s ease, padding .35s ease;
+  padding: 0 20px;
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: 0 0 var(--radius) var(--radius);
+  margin-top: -1px;
+}
+.accordion-body.open {
+  max-height: 800px; padding: 20px;
+  border-color: var(--surface-2);
+  border-top-color: transparent;
+}
+.accordion-body p, .accordion-body li {
+  font-size: 14px; color: var(--text-2); line-height: 1.9;
+}
+.accordion-body ul { padding-left: 20px; margin: 8px 0; }
+.accordion-body li { margin-bottom: 4px; }
+
+/* TECH STACK */
+.stack-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.stack-item {
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.stack-item .layer { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+.stack-item .tech { font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* DEPLOYMENT TABLE */
+.deploy-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.deploy-item {
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.deploy-item .component { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+.deploy-item .platform { font-size: 14px; font-weight: 600; color: var(--text); }
+.deploy-item .url { font-size: 12px; color: var(--accent); word-break: break-all; }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .header-inner { flex-direction: column; align-items: flex-start; }
+  .header-actions { width: 100%; }
+  .btn-print { flex: 1; justify-content: center; }
+  .nav { gap: 6px; }
+  .nav a { font-size: 11px; padding: 5px 10px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .card { padding: 18px; }
+  .section-title { font-size: 17px; }
+  .accordion-btn { font-size: 13px; padding: 14px 16px; }
+  .accordion-body.open { padding: 16px; }
+}
+
+/* PRINT */
+@media print {
+  @page { margin: 0.5in; }
+  body { background: #fff; color: #000; }
+  .nav, .btn-print { display: none; }
+  .header { padding-top: 0; }
+  .card { background: #f8fafc; border: 1px solid #e2e8f0; break-inside: avoid; }
+  .flow-item { break-inside: avoid; }
+  .accordion-body { max-height: none !important; padding: 16px 20px !important; border-color: #e2e8f0; }
+  .accordion-btn { background: #f1f5f9; border-color: #e2e8f0; }
+  .stack-item, .deploy-item { background: #f8fafc; border-color: #e2e8f0; }
+  th { background: #e2e8f0; color: #000; }
+  td { border-color: #e2e8f0; color: #475569; }
+  .section-title .num { background: #3b82f6; }
+  .issue-card { border-left-color: #f59e0b; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .accordion-body p, .accordion-body li { color: #475569; }
+  .card-text { color: #475569; }
+  .flow-content p { color: #475569; }
+  .stack-item .tech, .deploy-item .platform { color: #000; }
+  .deploy-item .url { color: #2563eb; }
+  .issue-card .card-text strong { color: #000; }
+  .feature-icon { background: #f1f5f9; }
+  .accordion-btn .icon { background: #dbeafe; color: #2563eb; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo">C</div>
+      <div>
+        <h1>Corp<span>Care</span></h1>
+        <div class="subtitle">Documentation & Interview Preparation Guide</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-print" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Save as PDF
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <a href="#overview">Overview</a>
+  <a href="#flow">Complete Flow</a>
+  <a href="#features">Features</a>
+  <a href="#api">API</a>
+  <a href="#issues">Issues</a>
+  <a href="#qa">Interview Q&A</a>
+  <a href="#code">Important Code</a>
+  <a href="#deployment">Deployment</a>
+</nav>
+
+<!-- SECTION 1: OVERVIEW -->
+<section class="section" id="overview">
+  <div class="section-title"><span class="num">1</span> Project Overview</div>
+
+  <div class="card">
+    <div class="card-title">CorpCare — Corporate Health Management Platform</div>
+    <div class="card-text">
+      <p style="margin-bottom:12px">CorpCare is a <strong>B2B platform</strong> where companies onboard their employees, save their health vitals, and book health checkup appointments at partner hospitals. After booking, employees automatically receive a <strong>WhatsApp confirmation</strong> via Twilio and a <strong>voice confirmation call</strong> via Bolna AI.</p>
+    </div>
+  </div>
+
+  <div class="section-sub" style="margin-top:-8px">Technology Stack</div>
+  <div class="stack-grid">
+    <div class="stack-item"><span class="layer">Backend</span><span class="tech">Java 17, Spring Boot 3</span></div>
+    <div class="stack-item"><span class="layer">Database</span><span class="tech">MySQL 8 (db4free / Aiven)</span></div>
+    <div class="stack-item"><span class="layer">Frontend</span><span class="tech">React + Vite → Vercel</span></div>
+    <div class="stack-item"><span class="layer">Voice Calls</span><span class="tech">Bolna AI (Nova agent)</span></div>
+    <div class="stack-item"><span class="layer">WhatsApp</span><span class="tech">Twilio WhatsApp Sandbox</span></div>
+    <div class="stack-item"><span class="layer">Deployment</span><span class="tech">Render (backend) + Vercel (frontend)</span></div>
+  </div>
+</section>
+
+<!-- SECTION 2: FLOW -->
+<section class="section" id="flow">
+  <div class="section-title"><span class="num">2</span> Complete Flow (A to Z)</div>
+
+  <div class="card flow">
+    <div class="flow-item">
+      <div class="flow-num"></div>
+      <div class="flow-content">
+        <h3>Corporate client registers</h3>
+        <p>e.g. <em>Virat Kohli Fitness Pvt Ltd</em> — max 100 employees per client enforced at API level</p>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-num"></div>
+      <div class="flow-content">
+        <h3>Client adds employees</h3>
+        <p>Each employee is linked to exactly one client via a foreign key relationship</p>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-num"></div>
+      <div class="flow-content">
+        <h3>Employee health vitals saved</h3>
+        <p>Height, Weight, Blood Pressure, Blood Sugar, Blood Group — stored per employee</p>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-num"></div>
+      <div class="flow-content">
+        <h3>Hospital registers & creates slots</h3>
+        <p>3 fixed 8-hour shifts: <strong>Morning</strong> 8AM-4PM · <strong>Evening</strong> 4PM-12AM · <strong>Night</strong> 12AM-8AM</p>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-num"></div>
+      <div class="flow-content">
+        <h3>Employee books an appointment</h3>
+        <p>1 slot = 1 person — slot is locked (isBooked=true) immediately after booking, preventing double booking</p>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-num"></div>
+      <div class="flow-content">
+        <h3>Bolna AI calls the employee</h3>
+        <p>Automated voice call confirms hospital, date, shift, and purpose of visit via Nova agent</p>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-num"></div>
+      <div class="flow-content">
+        <h3>Twilio WhatsApp confirmation</h3>
+        <p>Booking details sent to employee's WhatsApp immediately after booking</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: FEATURES -->
+<section class="section" id="features">
+  <div class="section-title"><span class="num">3</span> Key Features</div>
+
+  <div class="card-grid">
+    <div class="card feature-card">
+      <div class="feature-icon" style="background:rgba(59,130,246,0.15)">🏢</div>
+      <div class="card-title">Multi-Tenant B2B Architecture</div>
+      <div class="card-text">Each corporate client is isolated. Employees belong to exactly one client. Max 100 employee limit enforced at the service layer.</div>
+    </div>
+    <div class="card feature-card">
+      <div class="feature-icon" style="background:rgba(34,197,94,0.15)">❤️</div>
+      <div class="card-title">Health Vitals Management</div>
+      <div class="card-text">Digital health profile per employee — height, weight, blood pressure, blood sugar, blood group. One vitals record per employee.</div>
+    </div>
+    <div class="card feature-card">
+      <div class="feature-icon" style="background:rgba(139,92,246,0.15)">📅</div>
+      <div class="card-title">8-Hour Slot System</div>
+      <div class="card-text">3 fixed shifts: Morning (8-4), Evening (4-12), Night (12-8). Each slot is atomic — once booked it is immediately locked.</div>
+    </div>
+    <div class="card feature-card">
+      <div class="feature-icon" style="background:rgba(245,158,11,0.15)">🎙️</div>
+      <div class="card-title">Bolna AI Voice Confirmation</div>
+      <div class="card-text">Nova agent calls every employee after booking. Handles no-response, reschedule requests, wrong number, and silence detection.</div>
+    </div>
+    <div class="card feature-card">
+      <div class="feature-icon" style="background:rgba(59,130,246,0.15)">💬</div>
+      <div class="card-title">Twilio WhatsApp Notifications</div>
+      <div class="card-text">Instant WhatsApp confirmation sent after every booking. Sandbox available for demo; Business API for production.</div>
+    </div>
+    <div class="card feature-card">
+      <div class="feature-icon" style="background:rgba(239,68,68,0.15)">🛡️</div>
+      <div class="card-title">Global Exception Handling</div>
+      <div class="card-text"><code>@ControllerAdvice</code> maps slot booked (409), employee not found (404), capacity exceeded (400). All responses in standard <code>{status, message, data}</code> format.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: API -->
+<section class="section" id="api">
+  <div class="section-title"><span class="num">4</span> API Endpoints</div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>POST</td><td>/api/clients</td><td>Register a new corporate client</td></tr>
+          <tr><td>GET</td><td>/api/clients</td><td>List all corporate clients</td></tr>
+          <tr><td>POST</td><td>/api/clients/{id}/employees</td><td>Add employee to a client</td></tr>
+          <tr><td>GET</td><td>/api/clients/{id}/employees</td><td>List employees of a client</td></tr>
+          <tr><td>POST</td><td>/api/employees/{id}/vitals</td><td>Save or update health vitals</td></tr>
+          <tr><td>GET</td><td>/api/employees/{id}/vitals</td><td>Get employee health vitals</td></tr>
+          <tr><td>POST</td><td>/api/hospitals</td><td>Register a partner hospital</td></tr>
+          <tr><td>GET</td><td>/api/hospitals</td><td>List all partner hospitals</td></tr>
+          <tr><td>POST</td><td>/api/hospitals/{id}/slots</td><td>Create an appointment slot</td></tr>
+          <tr><td>GET</td><td>/api/hospitals/{id}/slots/available</td><td>Get available slots (optional ?date= filter)</td></tr>
+          <tr><td>POST</td><td>/api/appointments</td><td>Book an appointment (employee + slot)</td></tr>
+          <tr><td>GET</td><td>/api/appointments</td><td>List all appointments (role-scoped)</td></tr>
+          <tr><td>GET</td><td>/api/appointments/employee/{id}</td><td>Get appointments for an employee</td></tr>
+          <tr><td>GET</td><td>/api/appointments/hospital/{id}</td><td>Get appointments for a hospital</td></tr>
+          <tr><td>PUT</td><td>/api/appointments/{id}/cancel</td><td>Cancel an appointment</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: ISSUES -->
+<section class="section" id="issues">
+  <div class="section-title"><span class="num">5</span> Issues Faced & Troubleshooting</div>
+
+  <div class="card issue-card">
+    <div class="card-title"><span class="badge badge-amber">Issue 1</span> Bolna call cutting mid-conversation</div>
+    <div class="card-text">
+      <strong>Cause:</strong> Silence timeout too low + agent prompt had no instruction to wait for response.<br>
+      <strong>Fix:</strong> Increased endpointing to 2000ms, added explicit wait instructions after each question in the prompt, removed name pronunciation from agent.
+    </div>
+  </div>
+
+  <div class="card issue-card">
+    <div class="card-title"><span class="badge badge-amber">Issue 2</span> Employee name not recognized by Bolna STT</div>
+    <div class="card-text">
+      <strong>Cause:</strong> Agent repeated employee names back — STT would mishear Indian names.<br>
+      <strong>Fix:</strong> Removed name repetition from prompt entirely, replaced with "Hi there" greeting, set speech speed to 0.85.
+    </div>
+  </div>
+
+  <div class="card issue-card">
+    <div class="card-title"><span class="badge badge-amber">Issue 3</span> WhatsApp messages not delivered to new numbers</div>
+    <div class="card-text">
+      <strong>Cause:</strong> Twilio sandbox requires every new number to opt-in by sending a join message first.<br>
+      <strong>Fix:</strong> Shared join code with testers for demo. Applied for Twilio WhatsApp Business API for production (Meta approval 1-7 days).
+    </div>
+  </div>
+
+  <div class="card issue-card">
+    <div class="card-title"><span class="badge badge-amber">Issue 4</span> Bolna could not call new/unverified numbers</div>
+    <div class="card-text">
+      <strong>Cause:</strong> Bolna trial plan restricts outbound calls to verified numbers only.<br>
+      <strong>Fix:</strong> Added numbers manually to Verified Numbers list in Bolna Settings. Production fix: purchase Bolna credits to unlock all numbers.
+    </div>
+  </div>
+
+  <div class="card issue-card">
+    <div class="card-title"><span class="badge badge-amber">Issue 5</span> Slot double booking under concurrent requests</div>
+    <div class="card-text">
+      <strong>Cause:</strong> <code>isBooked</code> check and update were two separate operations — race condition.<br>
+      <strong>Fix:</strong> Added <code>@Transactional</code> on <code>bookAppointment()</code> ensuring read-check-write is atomic. Database unique constraint on slot as final safety net.
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: Q&A -->
+<section class="section" id="qa">
+  <div class="section-title"><span class="num">6</span> Interview Questions & Answers</div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      What is CorpCare and what problem does it solve?
+    </button>
+    <div class="accordion-body">
+      <p>CorpCare is a <strong>B2B corporate health management platform</strong>. The problem it solves: companies struggle to coordinate annual health checkups for hundreds of employees across multiple hospitals. CorpCare centralises client onboarding, employee health records, hospital slot management, and automated appointment booking with voice and WhatsApp confirmation in one platform.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      Explain the multi-tenant architecture.
+    </button>
+    <div class="accordion-body">
+      <p>Each corporate client is a <strong>tenant</strong>. Employees strictly belong to one client via a foreign key relationship (<code>client_id</code> on the employees table). All API endpoints are scoped to <code>clientId</code> — one company cannot access another's data. A <strong>max employee limit of 100</strong> is enforced at the service layer before persisting. The frontend also uses JWT-based role isolation: CLIENT users only see their own company's data.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      How did you prevent double booking of slots?
+    </button>
+    <div class="accordion-body">
+      <p>Three-layer prevention:</p>
+      <ul>
+        <li><strong>Service layer:</strong> Checks <code>isBooked</code> flag before booking and throws <code>409 Conflict</code> if already booked.</li>
+        <li><strong>Transactional:</strong> <code>@Transactional</code> on <code>bookAppointment()</code> ensures check and update happen atomically within a single DB transaction.</li>
+        <li><strong>Database:</strong> Unique constraint on the slot table as a final safety net.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      How does Bolna integration work?
+    </button>
+    <div class="accordion-body">
+      <p>After a successful booking is saved, <code>AppointmentService</code> calls <code>NotificationService</code> which makes a <code>POST</code> request to the <strong>Bolna API</strong> with the agent ID (<code>87bf2a9f-3da8-47cb-b3cb-3f6cc112c4f1</code>), employee phone number, and <code>user_data</code> containing hospital name, slot date, shift type, and purpose of visit. Bolna then places an automated voice call using the configured <strong>Nova agent</strong> — a 5-step conversation script that greets, confirms appointment details, asks purpose of visit, handles reschedules, and gracefully ends.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      What is the 8-hour slot system?
+    </button>
+    <div class="accordion-body">
+      <p>Hospitals operate in <strong>3 fixed 8-hour shifts</strong>:</p>
+      <ul>
+        <li><strong>Morning</strong> — 8AM to 4PM</li>
+        <li><strong>Evening</strong> — 4PM to 12AM</li>
+        <li><strong>Night</strong> — 12AM to 8AM</li>
+      </ul>
+      <p>Each shift on a given date is one <code>AppointmentSlot</code>. A slot has an <code>isBooked</code> boolean flag. Once an employee books a slot, <code>isBooked</code> is set to <code>true</code> and the slot no longer appears in available-slot queries. This ensures <strong>1 slot = 1 person</strong>.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      How is exception handling done?
+    </button>
+    <div class="accordion-body">
+      <p>A <code>@ControllerAdvice</code> class intercepts all exceptions globally. Custom exceptions like <code>SlotAlreadyBookedException</code>, <code>EmployeeNotFoundException</code>, <code>ClientCapacityExceededException</code> are mapped to appropriate HTTP status codes (<code>409</code>, <code>404</code>, <code>400</code>). <code>AccessDeniedException</code> maps to <code>403</code>. All responses follow a standard JSON wrapper: <code>{status, message, data}</code>.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      Why did you use @Transactional on booking?
+    </button>
+    <div class="accordion-body">
+      <p>Without <code>@Transactional</code>, two concurrent requests could both pass the <code>isBooked</code> check simultaneously before either updates the flag — causing a <strong>double booking</strong>. <code>@Transactional</code> ensures the read-check-write sequence is <strong>atomic within a single database transaction</strong>. The transaction isolation level ensures one request sees the other's update before proceeding.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      What would you improve in production?
+    </button>
+    <div class="accordion-body">
+      <ul>
+        <li><strong>JWT authentication</strong> per client tenant (data isolation already done)</li>
+        <li><strong>Twilio WhatsApp Business API</strong> — remove sandbox opt-in requirement</li>
+        <li><strong>Bolna paid plan</strong> — unrestricted outbound calls to any number</li>
+        <li><strong>Slot auto-generation</strong> — hospitals define a date range and all slots are created automatically</li>
+        <li><strong>Admin dashboard</strong> — HR-wide view of all employee appointments across clients</li>
+        <li><strong>Retry mechanism</strong> — failed Bolna calls retried with exponential backoff</li>
+        <li><strong>Async notification</strong> — use <code>@Async</code> so API response is not blocked by Bolna/Twilio latency</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      How is the frontend connected to the backend?
+    </button>
+    <div class="accordion-body">
+      <p>React frontend deployed on <strong>Vercel</strong> makes REST API calls to the Spring Boot backend deployed on <strong>Render</strong>. <strong>Axios</strong> is used as the HTTP client with a base URL configured via <code>VITE_API_URL</code> environment variable. <strong>CORS</strong> is configured on the Spring Boot side to allow requests from the Vercel domain. The Axios interceptor automatically attaches the JWT <code>Bearer</code> token to every request and redirects to login on 401/403 responses.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-btn" onclick="toggle(this)">
+      <span class="icon">+</span>
+      What is the purpose of visit field?
+    </button>
+    <div class="accordion-body">
+      <p>It is collected during the <strong>Bolna confirmation call</strong> — the Nova AI agent asks the employee the reason for their visit (Annual Checkup, Blood Test, BP Check, or General OPD). This is passed back to the Spring Boot API and stored with the appointment record. It helps hospitals <strong>prepare for the employee's specific needs in advance</strong> (e.g., the lab can ready blood test equipment, the doctor can review relevant history).</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: IMPORTANT CODE -->
+<section class="section" id="code">
+  <div class="section-title"><span class="num">7</span> Important Code with Explanation</div>
+
+  <div class="card">
+    <div class="card-title">📌 JWT Authentication Filter</div>
+    <div class="card-text" style="margin-bottom:8px">Extracts the Bearer token from every request, validates it, and sets the security context so controllers know who the user is.</div>
+    <div class="code-header"><span class="code-file">JwtAuthFilter.java</span></div>
+    <div class="code-block">
+<pre><span class="keyword">protected void</span> <span class="method">doFilterInternal</span>(HttpServletRequest request, HttpServletResponse response,
+                                FilterChain filterChain) {
+    String authHeader = request.getHeader(<span class="string">"Authorization"</span>);
+    <span class="keyword">if</span> (authHeader != <span class="keyword">null</span> && authHeader.startsWith(<span class="string">"Bearer "</span>)) {
+        Claims claims = jwtUtil.validateToken(authHeader.substring(<span class="number">7</span>));
+        <span class="keyword">var</span> auth = <span class="keyword">new</span> UsernamePasswordAuthenticationToken(
+            <span class="keyword">new</span> <span class="type">JwtUser</span>(claims.getSubject(), claims.get(<span class="string">"name"</span>),
+                       claims.get(<span class="string">"userId"</span>), claims.get(<span class="string">"role"</span>)),
+            <span class="keyword">null</span>,
+            List.of(<span class="keyword">new</span> <span class="type">SimpleGrantedAuthority</span>(<span class="string">"ROLE_"</span> + claims.get(<span class="string">"role"</span>)))
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+    filterChain.doFilter(request, response);
+}</pre>
+    </div>
+    <div class="card-text" style="margin-top:8px">The <code>JwtUser</code> record carries <code>username</code>, <code>name</code>, <code>userId</code>, and <code>role</code> — available to all controllers via <code>SecurityUtil.getCurrentUser()</code>.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 Atomic Booking — Double Booking Prevention</div>
+    <div class="card-text" style="margin-bottom:8px">Three-layer safety: service check, <code>@Transactional</code> atomicity, and DB unique constraint. This is the most critical business logic in the app.</div>
+    <div class="code-header"><span class="code-file">AppointmentService.java</span></div>
+    <div class="code-block">
+<pre><span class="annotation">@Transactional</span>
+<span class="keyword">public</span> <span class="type">Appointment</span> <span class="method">bookAppointment</span>(AppointmentRequest request) {
+    Employee employee = employeeService.getEmployeeById(request.getEmployeeId());
+    AppointmentSlot slot = slotService.getSlotById(request.getSlotId());
+
+    <span class="comment">// Layer 1: Service check</span>
+    <span class="keyword">if</span> (slot.getIsBooked())
+        <span class="keyword">throw new</span> <span class="type">BusinessException</span>(<span class="string">"Slot already booked"</span>);
+
+    <span class="comment">// 1 employee = 1 active booking</span>
+    List&lt;Appointment&gt; existing = appointmentRepository.findByEmployeeId(employee.getId());
+    <span class="keyword">if</span> (!existing.isEmpty())
+        <span class="keyword">throw new</span> <span class="type">BusinessException</span>(<span class="string">"Employee already has an appointment"</span>);
+
+    <span class="comment">// Layer 2: Atomic update within @Transactional</span>
+    slot.setIsBooked(<span class="keyword">true</span>);
+    slotRepository.save(slot);
+
+    Appointment appointment = <span class="keyword">new</span> <span class="type">Appointment</span>(employee, slot);
+    appointment = appointmentRepository.save(appointment);
+
+    notificationService.notifyAppointmentBooked(appointment);
+    <span class="keyword">return</span> appointment;
+}</pre>
+    </div>
+    <div class="card-text" style="margin-top:8px">Without <code>@Transactional</code>, two concurrent requests could both pass the <code>isBooked</code> check before either updates — causing double booking. The annotation ensures read-check-write is atomic.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 Data Isolation — Multi-Tenant Security</div>
+    <div class="card-text" style="margin-bottom:8px">Every controller call goes through this check. CLIENT users can only access resources where the ID matches their JWT <code>userId</code>. ADMIN bypasses all checks.</div>
+    <div class="code-header"><span class="code-file">SecurityUtil.java</span></div>
+    <div class="code-block">
+<pre><span class="keyword">public static</span> <span class="type">JwtUser</span> <span class="method">getCurrentUser</span>() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    <span class="keyword">if</span> (auth == <span class="keyword">null</span> || !auth.isAuthenticated()
+        || !(auth.getPrincipal() <span class="keyword">instanceof</span> <span class="type">JwtUser</span>))
+        <span class="keyword">return null</span>;
+    <span class="keyword">return</span> (<span class="type">JwtUser</span>) auth.getPrincipal();
+}
+
+<span class="keyword">public static void</span> <span class="method">requireOwnership</span>(Long targetId, String role) {
+    JwtUser user = getCurrentUser();
+    <span class="keyword">if</span> (user == <span class="keyword">null</span>) <span class="keyword">throw new</span> <span class="type">AccessDeniedException</span>(<span class="string">"Not authenticated"</span>);
+    <span class="keyword">if</span> (<span class="string">"ADMIN"</span>.equals(user.role())) <span class="keyword">return</span>;
+    <span class="keyword">if</span> (!user.role().equals(role) || !user.userId().equals(targetId))
+        <span class="keyword">throw new</span> <span class="type">AccessDeniedException</span>(<span class="string">"Access denied"</span>);
+}</pre>
+    </div>
+    <div class="card-text" style="margin-top:8px">Usage in a controller: <code>SecurityUtil.requireOwnership(clientId, "CLIENT")</code> — blocks any CLIENT user from accessing another client's data. <code>AccessDeniedException</code> maps to <code>403 Forbidden</code>.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 Bolna AI Voice Call — Nova Agent Prompt</div>
+    <div class="card-text" style="margin-bottom:8px">After booking, Bolna receives a POST with the agent ID, phone number, and user_data. The prompt defines a 5-step conversation. Employee name is never spoken (STT mishears Indian names).</div>
+    <div class="code-header"><span class="code-file">NotificationService.java</span></div>
+    <div class="code-block">
+<pre><span class="keyword">private</span> String <span class="method">jsonEscape</span>(String s) {
+    <span class="keyword">return</span> s.replace(<span class="string">"\\"</span>, <span class="string">"\\\\"</span>)
+            .replace(<span class="string">"\""</span>, <span class="string">"\\\""</span>)
+            .replace(<span class="string">"\n"</span>, <span class="string">"\\n"</span>);
+}
+
+<span class="keyword">public void</span> <span class="method">notifyAppointmentBooked</span>(Appointment appointment) {
+    <span class="comment">// Build user_data for Bolna</span>
+    Map&lt;String, Object&gt; userData = Map.of(
+        <span class="string">"hospital"</span>, jsonEscape(appointment.getSlot().getHospital().getHospitalName()),
+        <span class="string">"date"</span>, appointment.getSlot().getSlotDate().toString(),
+        <span class="string">"shift"</span>, appointment.getSlot().getShiftType().name(),
+        <span class="string">"phone"</span>, appointment.getEmployee().getPhone()
+    );
+
+    <span class="comment">// POST to Bolna API</span>
+    restTemplate.postForEntity(
+        <span class="string">"https://api.bolna.ai/call"</span>,
+        Map.of(<span class="string">"agent_id"</span>, bolnaAgentId, <span class="string">"phone_number"</span>, phone,
+               <span class="string">"user_data"</span>, userData,
+               <span class="string">"prompt"</span>, buildPrompt(/* details */)),
+        String.class
+    );
+}</pre>
+    </div>
+    <div class="card-text" style="margin-top:8px">The Nova agent prompt: (1) Greet with "Hi there", (2) Confirm hospital/date/shift, (3) Ask purpose of visit, (4) Handle reschedule/no-response/wrong-number, (5) Graceful end. Speech speed 0.85, endpointing 2000ms.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 Global Exception Handling</div>
+    <div class="card-text" style="margin-bottom:8px">Every exception returns a consistent <code>{status, message, data}</code> JSON. No stack traces leak to the client.</div>
+    <div class="code-header"><span class="code-file">GlobalExceptionHandler.java</span></div>
+    <div class="code-block">
+<pre><span class="annotation">@ExceptionHandler</span>(<span class="type">AccessDeniedException</span>.class)
+<span class="keyword">public</span> ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; <span class="method">handleAccessDenied</span>(AccessDeniedException ex) {
+    <span class="keyword">return</span> ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(ApiResponse.error(<span class="string">"Access denied"</span>));
+}
+
+<span class="annotation">@ExceptionHandler</span>(<span class="type">BusinessException</span>.class)
+<span class="keyword">public</span> ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; <span class="method">handleBusiness</span>(BusinessException ex) {
+    <span class="keyword">return</span> ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ex.getMessage()));
+}
+
+<span class="annotation">@ExceptionHandler</span>(<span class="type">ResourceNotFoundException</span>.class)
+<span class="keyword">public</span> ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; <span class="method">handleNotFound</span>(ResourceNotFoundException ex) {
+    <span class="keyword">return</span> ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(ex.getMessage()));
+}
+
+<span class="annotation">@ExceptionHandler</span>(<span class="type">Exception</span>.class)
+<span class="keyword">public</span> ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; <span class="method">handleGeneral</span>(Exception ex) {
+    <span class="keyword">return</span> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ApiResponse.error(<span class="string">"Internal server error: "</span> + ex.getMessage()));
+}</pre>
+    </div>
+    <div class="card-text" style="margin-top:8px">HTTP status mapping: <code>403</code> → Access denied, <code>404</code> → Not found, <code>409</code> → Business conflict (e.g. slot booked), <code>400</code> → Validation, <code>500</code> → Everything else.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 API Response Wrapper</div>
+    <div class="card-text" style="margin-bottom:8px">Every endpoint returns this wrapper. Frontend always reads <code>response.data.status</code>, <code>response.data.message</code>, <code>response.data.data</code>.</div>
+    <div class="code-header"><span class="code-file">ApiResponse.java</span></div>
+    <div class="code-block">
+<pre><span class="keyword">public class</span> <span class="type">ApiResponse</span>&lt;T&gt; {
+    <span class="keyword">private</span> String status;       <span class="comment">// "success" | "error"</span>
+    <span class="keyword">private</span> String message;
+    <span class="keyword">private</span> T data;
+
+    <span class="keyword">public static</span> &lt;T&gt; <span class="type">ApiResponse</span>&lt;T&gt; <span class="method">success</span>(String message, T data) {
+        <span class="keyword">return new</span> <span class="type">ApiResponse</span>&lt;&gt;(<span class="string">"success"</span>, message, data);
+    }
+
+    <span class="keyword">public static</span> &lt;T&gt; <span class="type">ApiResponse</span>&lt;T&gt; <span class="method">error</span>(String message) {
+        <span class="keyword">return new</span> <span class="type">ApiResponse</span>&lt;&gt;(<span class="string">"error"</span>, message, <span class="keyword">null</span>);
+    }
+}</pre>
+    </div>
+    <div class="card-text" style="margin-top:8px">Consistent API contract: frontend Axios interceptor checks <code>response.data.status === "error"</code> to show toast messages. The <code>data</code> field carries the actual payload (employee list, appointment, etc.).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 Security Config — Endpoint Access Rules</div>
+    <div class="card-text" style="margin-bottom:8px">Login and public endpoints are <code>permitAll()</code>. Everything else requires a valid JWT. Stateless sessions — no <code>HttpSession</code>.</div>
+    <div class="code-header"><span class="code-file">SecurityConfig.java</span></div>
+    <div class="code-block">
+<pre><span class="annotation">@Bean</span>
+<span class="keyword">public</span> <span class="type">SecurityFilterChain</span> <span class="method">filterChain</span>(HttpSecurity http) <span class="keyword">throws</span> Exception {
+    http
+        .cors(c -> c.configurationSource(corsConfig.corsConfigurationSource()))
+        .csrf(c -> c.disable())
+        .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
+        .authorizeHttpRequests(a -> a
+            .requestMatchers(<span class="string">"/api/auth/**"</span>).permitAll()
+            .requestMatchers(<span class="string">"/api/employees/verify"</span>).permitAll()
+            .requestMatchers(<span class="string">"/api/admin/verify"</span>).permitAll()
+            .requestMatchers(<span class="string">"/api/chat"</span>, <span class="string">"/api/stats"</span>, <span class="string">"/"</span>).permitAll()
+            .anyRequest().authenticated()
+        )
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+    <span class="keyword">return</span> http.build();
+}</pre>
+    </div>
+    <div class="card-text" style="margin-top:8px">The <code>JwtAuthFilter</code> runs before Spring's own auth filter. If the JWT is missing or invalid, the request hits <code>.anyRequest().authenticated()</code> and returns <code>401 Unauthorized</code>.</div>
+  </div>
+</section>
+
+<!-- SECTION 8: DEPLOYMENT -->
+<section class="section" id="deployment">
+  <div class="section-title"><span class="num">8</span> Deployment Details</div>
+
+  <div class="deploy-grid">
+    <div class="deploy-item">
+      <span class="component">Frontend</span>
+      <span class="platform">Vercel</span>
+      <span class="url">corpcare-afxw.vercel.app</span>
+    </div>
+    <div class="deploy-item">
+      <span class="component">Backend API</span>
+      <span class="platform">Render</span>
+      <span class="url">corpcare.onrender.com</span>
+    </div>
+    <div class="deploy-item">
+      <span class="component">Database</span>
+      <span class="platform">Filess.io / db4free</span>
+      <span class="url">MySQL 8.0 (remote)</span>
+    </div>
+    <div class="deploy-item">
+      <span class="component">Voice Calls</span>
+      <span class="platform">Bolna AI</span>
+      <span class="url">app.bolna.ai</span>
+    </div>
+    <div class="deploy-item">
+      <span class="component">WhatsApp</span>
+      <span class="platform">Twilio Sandbox</span>
+      <span class="url">Production: Business API pending</span>
+    </div>
+    <div class="deploy-item">
+      <span class="component">Source Code</span>
+      <span class="platform">GitHub</span>
+      <span class="url">github.com/Partha-2/corpcare</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div style="text-align:center;padding:32px 0 48px;color:var(--text-3);font-size:13px;border-top:1px solid var(--border)">
+  CorpCare — Built with Spring Boot 3 + React 18 · Documentation v1.0
+</div>
+
+</div>
+
+<script>
+function toggle(btn) {
+  const body = btn.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.accordion-body.open').forEach(b => {
+    b.classList.remove('open');
+    b.previousElementSibling.classList.remove('open');
+  });
+  if (!isOpen) {
+    body.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+// Smooth nav highlight on scroll
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav a');
+function onScroll() {
+  let current = '';
+  sections.forEach(s => {
+    const top = s.offsetTop - 120;
+    if (scrollY >= top) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+}
+window.addEventListener('scroll', onScroll);
+onScroll();
+</script>
+
+</body>
+</html>

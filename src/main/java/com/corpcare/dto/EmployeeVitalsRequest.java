@@ -1,13 +1,19 @@
 package com.corpcare.dto;
 
 import com.corpcare.enums.BloodGroup;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
 
 public class EmployeeVitalsRequest {
     @Positive
+    @DecimalMin(value = "20", message = "Height must be at least 20 cm")
+    @DecimalMax(value = "300", message = "Height cannot exceed 300 cm")
     private Double height;
 
     @Positive
+    @DecimalMin(value = "1", message = "Weight must be at least 1 kg")
+    @DecimalMax(value = "500", message = "Weight cannot exceed 500 kg")
     private Double weight;
 
     private String bloodPressure;

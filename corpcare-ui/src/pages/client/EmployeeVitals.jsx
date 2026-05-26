@@ -25,8 +25,21 @@ export default function EmployeeVitals() {
     ]).finally(() => setLoading(false))
   }, [employeeId])
 
+  const [errors, setErrors] = useState({})
+
+  const validate = () => {
+    const errs = {}
+    const h = +form.height
+    const w = +form.weight
+    if (h < 50 || h > 280) errs.height = 'Height must be between 50 - 280 cm'
+    if (w < 2 || w > 400) errs.weight = 'Weight must be between 2 - 400 kg'
+    setErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!validate()) return
     try {
       const r = await api.post(`/employees/${employeeId}/vitals`, {
         ...form, height: +form.height, weight: +form.weight, bloodSugar: +form.bloodSugar
@@ -54,12 +67,15 @@ export default function EmployeeVitals() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Height (cm)</label>
-              <input type="number" step="0.1" placeholder="e.g. 175" value={form.height} onChange={e => setForm({...form, height: e.target.value})} required />
+              <input type="number" step="0.1" placeholder="e.g. 175" value={form.height} onChange={e => { setForm({...form, height: e.target.value}); setErrors({...errors, height: undefined}) }} required />
+              <small style={{ color: 'var(--gray-500)' }}>Range: 50 - 280 cm</small>
+              {errors.height && <div style={{ color: '#dc3545', fontSize: 12, marginTop: 4 }}>{errors.height}</div>}
             </div>
             <div className="form-group">
               <label>Weight (kg)</label>
-              <input type="number" step="0.1" placeholder="e.g. 72" value={form.weight} onChange={e => setForm({...form, weight: e.target.value})} required />
-            </div>
+              <input type="number" step="0.1" placeholder="e.g. 72" value={form.weight} onChange={e => { setForm({...form, weight: e.target.value}); setErrors({...errors, weight: undefined}) }} required />
+              <small style={{ color: 'var(--gray-500)' }}>Range: 2 - 400 kg</small>
+              {errors.weight && <div style={{ color: '#dc3545', fontSize: 12, marginTop: 4 }}>{errors.weight}</div>}
             <div className="form-group">
               <label>Blood Pressure</label>
               <input placeholder="e.g. 120/80" value={form.bloodPressure} onChange={e => setForm({...form, bloodPressure: e.target.value})} required />

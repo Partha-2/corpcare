@@ -52,7 +52,7 @@ public class PdfExtractionService {
 
         String[] paramKeys = {"hemoglobin", "rbcCount", "wbcCount", "plateletCount", "esr",
             "creatinine", "urea", "bloodSugar", "sgpt", "sgot", "urinePH", "specificGravity",
-            "urineProtein", "urineGlucose", "height", "weight"};
+            "urineProtein", "urineGlucose", "pcv", "mcv"};
 
         for (String key : paramKeys) {
             HealthParameter hp = rangeValidator.validate(key, extracted.getOrDefault(key, "Not Available"), isMale);

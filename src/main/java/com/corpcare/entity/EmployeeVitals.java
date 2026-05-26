@@ -3,6 +3,8 @@ package com.corpcare.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.corpcare.enums.BloodGroup;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDateTime;
 
@@ -20,10 +22,12 @@ public class EmployeeVitals {
     private Employee employee;
 
     @Positive
+    @DecimalMin("20") @DecimalMax("300")
     @Column(nullable = false)
     private Double height;
 
     @Positive
+    @DecimalMin("1") @DecimalMax("500")
     @Column(nullable = false)
     private Double weight;
 

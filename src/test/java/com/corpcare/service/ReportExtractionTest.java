@@ -1,8 +1,12 @@
 package com.corpcare.service;
 
 import com.corpcare.dto.ReportAnalysisResult;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -182,5 +186,70 @@ class ReportExtractionTest {
         System.out.println("Template Engine extraction: " + count + "/20\n");
 
         assertTrue(count >= 20, "ReportAnalyzer: expected >= 20/20, got " + count);
+    }
+
+    @Test
+    void testActualVendorPdf() throws Exception {
+        File pdfFile = new File("src/test/resources/vendor_report.pdf");
+        if (!pdfFile.exists()) {
+            System.out.println("⚠️  vendor_report.pdf not found — skipping actual PDF test\n");
+            return;
+        }
+        String text;
+        try (PDDocument doc = Loader.loadPDF(pdfFile)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            text = stripper.getText(doc);
+        }
+        System.out.println("===== RAW PDF TEXT (first 2000 chars) =====");
+        System.out.println(text.length() > 2000 ? text.substring(0, 2000) + "\n..." : text);
+        System.out.println("\n");
+
+        VendorClassifierService classifier = new VendorClassifierService();
+        String vendorFormat = classifier.classify(text);
+        System.out.println("Vendor classified as: " + vendorFormat);
+
+        Map<String, String> extracted = templateEngine.extract(text, vendorFormat);
+
+        System.out.println("===== ACTUAL PDF EXTRACTION =====");
+        int count = 0;
+        for (Map.Entry<String, String> e : extracted.entrySet()) {
+            String status = "Not Available".equals(e.getValue()) ? "❌ MISSING" : "✅";
+            if (!"Not Available".equals(e.getValue())) count++;
+            System.out.printf("  %-20s = %-25s %s%n", e.getKey(), e.getValue(), status);
+        }
+        System.out.println("Parameters extracted: " + count + "/20\n");
+
+        assertTrue(count >= 17, "Actual PDF 1 (Star Lab): expected 17/20 (bloodSugar, sgpt, sgot not on report), got " + count);
+    }
+
+    @Test
+    void testSecondVendorPdf() throws Exception {
+        File pdfFile = new File("src/test/resources/vendor_report_2.pdf");
+        if (!pdfFile.exists()) {
+            System.out.println("⚠️  vendor_report_2.pdf not found — skipping\n");
+            return;
+        }
+        String text;
+        try (PDDocument doc = Loader.loadPDF(pdfFile)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            text = stripper.getText(doc);
+        }
+
+        VendorClassifierService classifier = new VendorClassifierService();
+        String vendorFormat = classifier.classify(text);
+        System.out.println("===== PDF 2 Vendor: " + vendorFormat + " =====");
+
+        Map<String, String> extracted = templateEngine.extract(text, vendorFormat);
+
+        System.out.println("===== PDF 2 EXTRACTION =====");
+        int count = 0;
+        for (Map.Entry<String, String> e : extracted.entrySet()) {
+            String status = "Not Available".equals(e.getValue()) ? "❌ MISSING" : "✅";
+            if (!"Not Available".equals(e.getValue())) count++;
+            System.out.printf("  %-20s = %-25s %s%n", e.getKey(), e.getValue(), status);
+        }
+        System.out.println("Parameters extracted: " + count + "/20\n");
+
+        assertTrue(count >= 17, "PDF 2: expected >= 17/20 (some not on report), got " + count);
     }
 }
