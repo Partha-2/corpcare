@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
 import { toast } from '../../components/Toast'
@@ -11,9 +11,9 @@ export default function HospitalAppointments() {
   const [hospital, setHospital] = useState(null)
   const [appointments, setAppointments] = useState([])
 
-  const loadAppts = (id) => {
+  const loadAppts = useCallback((id) => {
     api.get(`/appointments/hospital/${id}`).then(r => setAppointments(r.data.data))
-  }
+  }, [])
 
   useEffect(() => {
     api.get('/hospitals').then(r => {
@@ -24,15 +24,15 @@ export default function HospitalAppointments() {
       }
       setLoading(false)
     })
-  }, [])
+  }, [loadAppts])
 
-  const handleHospitalChange = (id) => {
+  const handleHospitalChange = useCallback((id) => {
     const h = hospitals.find(x => x.id === +id)
     setHospital(h)
     if (h) loadAppts(h.id)
-  }
+  }, [hospitals, loadAppts])
 
-  const handleCancel = async (id) => {
+  const handleCancel = useCallback(async (id) => {
     if (!window.confirm('Cancel this appointment?')) return
     try {
       await api.put(`/appointments/${id}/cancel`)
@@ -41,7 +41,7 @@ export default function HospitalAppointments() {
     } catch (err) {
       toast(err.response?.data?.message || 'Failed', 'error')
     }
-  }
+  }, [hospital, loadAppts])
 
   if (loading) return <Loading text="Loading appointments..." />
 

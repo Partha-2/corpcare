@@ -61,6 +61,7 @@ export default function EmployeeDashboard() {
         <div style={{ display: 'flex', gap: 12 }}>
           <Link to="/employee/vitals" className="btn">🩺 My Vitals</Link>
           <Link to="/employee/book" className="btn btn-green">📅 Book Appointment</Link>
+          <Link to="/employee/health-report" className="btn btn-primary">📄 Health Report Analysis</Link>
           <Link to="/employee/appointments" className="btn btn-ghost">📋 My Appointments</Link>
         </div>
       </div>

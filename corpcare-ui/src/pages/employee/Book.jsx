@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
@@ -47,7 +47,7 @@ export default function EmployeeBook() {
     }
   }
 
-  const handleBook = async () => {
+  const handleBook = useCallback(async () => {
     setBooking(true)
     try {
       const r = await api.post('/appointments', { employeeId: employee.id, slotId: +selectedSlot })
@@ -58,7 +58,7 @@ export default function EmployeeBook() {
     } finally {
       setBooking(false)
     }
-  }
+  }, [employee.id, selectedSlot, selectedDate, handleDateChange])
 
   return (
     <div className="fade-in">

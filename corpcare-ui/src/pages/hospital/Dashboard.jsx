@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
@@ -37,7 +37,7 @@ export default function HospitalDashboard() {
     if (h) loadStats(h.id)
   }
 
-  const pct = stats.total > 0 ? Math.round((stats.booked / stats.total) * 100) : 0
+  const pct = useMemo(() => stats.total > 0 ? Math.round((stats.booked / stats.total) * 100) : 0, [stats.total, stats.booked])
 
   if (loading) return <Loading text="Loading hospital..." />
 
