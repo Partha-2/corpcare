@@ -35,4 +35,20 @@ public class ReportAnalyzerController {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Analysis failed: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/debug-text")
+    public ResponseEntity<?> debugText(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "No file uploaded"));
+        }
+        try {
+            String text = service.extractTextOnly(file.getBytes());
+            return ResponseEntity.ok(java.util.Map.of(
+                "text", text,
+                "length", String.valueOf(text.length())
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Extraction failed: " + e.getMessage()));
+        }
+    }
 }
