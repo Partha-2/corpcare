@@ -46,13 +46,32 @@ public class HealthRangeValidator {
             return hp;
         }
 
-        hp.setValue(rawValue);
+        String cleaned = cleanNumeric(rawValue);
+        hp.setValue(cleaned);
 
         String key = paramName + (isMale ? "_male" : "_female");
         RangeDef range = RANGES.get(key);
         if (range == null) {
             range = RANGES.get(paramName);
         }
+
+        boolean isQualitative = "urineProtein".equals(paramName) || "urineGlucose".equals(paramName);
+
+        if (isQualitative) {
+            hp.setUnit("mg/dL");
+            String lower = cleaned.toLowerCase();
+            if ("nil".equals(lower) || "absent".equals(lower) || "negative".equals(lower) || "normal".equals(lower)) {
+                hp.setStatus("NORMAL");
+                hp.setColor("GREEN");
+                hp.setRecommendation("Normal");
+            } else {
+                hp.setStatus("ABOVE_RANGE");
+                hp.setColor("RED");
+                hp.setRecommendation("Abnormal value detected. Please consult a doctor.");
+            }
+            return hp;
+        }
+
         if (range == null) {
             hp.setStatus("NORMAL");
             hp.setColor("GREEN");
@@ -66,7 +85,7 @@ public class HealthRangeValidator {
         hp.setReferenceRange(range.min + " - " + range.max);
 
         try {
-            double val = parseNumeric(rawValue);
+            double val = Double.parseDouble(cleaned);
             if (val < range.min) {
                 hp.setStatus("BELOW_RANGE");
                 hp.setColor("YELLOW");
@@ -93,6 +112,11 @@ public class HealthRangeValidator {
         if (val == null || val.isBlank()) throw new NumberFormatException();
         val = val.trim().replaceAll("[^\\d.]", "");
         return Double.parseDouble(val);
+    }
+
+    private String cleanNumeric(String val) {
+        if (val == null || val.isBlank()) return val;
+        return val.trim().replaceAll("[^\\d.A-Za-z+\\-]", " ").trim().split("\\s+")[0];
     }
 
     private String formatParamName(String key) {
