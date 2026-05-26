@@ -1,5 +1,7 @@
-target/
-.git/
-.vscode/
+**/.git/
+**/node_modules/
+**/target/
+corpcare-ui/
 *.md
-node_modules/
+.cache/
+data/
