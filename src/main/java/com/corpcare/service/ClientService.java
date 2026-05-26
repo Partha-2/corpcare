@@ -32,6 +32,7 @@ public class ClientService {
         this.appointmentRepository = appointmentRepository;
     }
 
+    @Transactional
     public Client createClient(ClientRequest request) {
         Client client = new Client(
                 request.getCompanyName(),
@@ -51,6 +52,7 @@ public class ClientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Client", id));
     }
 
+    @Transactional
     public Client updateClient(Long id, ClientRequest request) {
         Client client = getClientById(id);
         client.setCompanyName(request.getCompanyName());

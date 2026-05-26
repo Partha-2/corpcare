@@ -28,6 +28,7 @@ public class HospitalService {
         this.appointmentRepository = appointmentRepository;
     }
 
+    @Transactional
     public Hospital createHospital(HospitalRequest request) {
         Hospital hospital = new Hospital(
                 request.getHospitalName(),
@@ -46,6 +47,7 @@ public class HospitalService {
                 .orElseThrow(() -> new ResourceNotFoundException("Hospital", id));
     }
 
+    @Transactional
     public Hospital updateHospital(Long id, HospitalRequest request) {
         Hospital hospital = getHospitalById(id);
         hospital.setHospitalName(request.getHospitalName());

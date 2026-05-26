@@ -6,6 +6,7 @@ import com.corpcare.entity.EmployeeVitals;
 import com.corpcare.exception.ResourceNotFoundException;
 import com.corpcare.repository.EmployeeVitalsRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EmployeeVitalsService {
@@ -18,6 +19,7 @@ public class EmployeeVitalsService {
         this.employeeService = employeeService;
     }
 
+    @Transactional
     public EmployeeVitals saveOrUpdateVitals(Long employeeId, EmployeeVitalsRequest request) {
         Employee employee = employeeService.getEmployeeById(employeeId);
 

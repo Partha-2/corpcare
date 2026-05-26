@@ -7,6 +7,7 @@ import com.corpcare.exception.BusinessException;
 import com.corpcare.exception.ResourceNotFoundException;
 import com.corpcare.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class EmployeeService {
         this.clientService = clientService;
     }
 
+    @Transactional
     public Employee createEmployee(Long clientId, EmployeeRequest request) {
         Client client = clientService.getClientById(clientId);
 
