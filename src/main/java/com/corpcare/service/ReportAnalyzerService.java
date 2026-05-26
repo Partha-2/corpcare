@@ -23,84 +23,87 @@ public class ReportAnalyzerService {
 
     private static final Logger log = LoggerFactory.getLogger(ReportAnalyzerService.class);
 
-    private static final String NUM = "(\\d+(?:[.,]\\d+)?)";
-    private static final String NOT_RANGE = "(?!\\s*[-\\u2013]\\s*\\d)";
-
-    private static final Map<String, ParamInfo> PARAMS = new LinkedHashMap<>();
-
-    private static class ParamInfo {
-        final String displayName;
+    private static class ParamDef {
+        final String name;
+        final double min;
+        final double max;
         final String unit;
-        final Double min;
-        final Double max;
         final boolean qualitative;
-        final String nameRegex;
+        final List<String> aliases;
 
-        ParamInfo(String displayName, String unit, Double min, Double max, String nameRegex) {
-            this.displayName = displayName;
-            this.unit = unit;
+        ParamDef(String name, double min, double max, String unit, String... aliases) {
+            this.name = name;
             this.min = min;
             this.max = max;
+            this.unit = unit;
             this.qualitative = false;
-            this.nameRegex = nameRegex;
+            this.aliases = List.of(aliases);
         }
 
-        ParamInfo(String displayName, String unit, String nameRegex) {
-            this.displayName = displayName;
+        ParamDef(String name, String unit, String... aliases) {
+            this.name = name;
+            this.min = 0;
+            this.max = 0;
             this.unit = unit;
-            this.min = null;
-            this.max = null;
             this.qualitative = true;
-            this.nameRegex = nameRegex;
+            this.aliases = List.of(aliases);
         }
     }
 
-    static {
-        PARAMS.put("haemoglobin", new ParamInfo("Haemoglobin", "g/dL", 13.5, 17.5,
-            "h[ae]moglobin(?:\\s*\\([^)]*\\))?"));
-        PARAMS.put("rbcCount", new ParamInfo("RBC Count", "milli./cu.mm", 4.5, 5.9,
-            "rbc[s]?\\s*count|red\\s*blood\\s*cells?"));
-        PARAMS.put("pcv", new ParamInfo("PCV / HCT", "%", 37.0, 53.0,
-            "packed\\s*cell\\s*volume|pcv|hct(?:\\s*\\([^)]*\\))?"));
-        PARAMS.put("mcv", new ParamInfo("MCV", "fL", 80.0, 100.0,
-            "mean\\s*corpuscular\\s*volume|\\bmcv\\b(?:\\s*\\([^)]*\\))?"));
-        PARAMS.put("mch", new ParamInfo("MCH", "pg", 26.0, 34.0,
-            "mean\\s*corpuscular\\s*h[ae]moglobin(?!\\s*conc)(?:\\s*\\([^)]*\\))?"));
-        PARAMS.put("mchc", new ParamInfo("MCHC", "g/dL", 32.0, 36.0,
-            "mchc|mean\\s*corpuscular\\s*hb\\s*conc(?:\\s*\\([^)]*\\))?"));
-        PARAMS.put("rdw", new ParamInfo("RDW-CV", "%", 11.0, 16.0,
-            "rdw[\\s-]cv"));
-        PARAMS.put("wbcCount", new ParamInfo("Total WBC Count", "/cumm", 4500.0, 11000.0,
-            "total\\s*wbc[s]?\\s*count"));
-        PARAMS.put("neutrophils", new ParamInfo("Neutrophils", "%", 35.0, 75.0,
-            "neutrophils"));
-        PARAMS.put("lymphocytes", new ParamInfo("Lymphocytes", "%", 24.0, 44.0,
-            "lymphocytes"));
-        PARAMS.put("monocytes", new ParamInfo("Monocytes", "%", 2.0, 12.0,
-            "monocytes"));
-        PARAMS.put("eosinophils", new ParamInfo("Eosinophils", "%", 0.0, 6.0,
-            "eosinophils"));
-        PARAMS.put("basophils", new ParamInfo("Basophils", "%", 0.0, 1.0,
-            "basophils"));
-        PARAMS.put("plateletCount", new ParamInfo("Platelet Count", "Lakh/cumm", 1.5, 4.5,
-            "platelet\\s*count"));
-        PARAMS.put("esr", new ParamInfo("ESR", "mm/hr", 0.0, 22.0,
-            "(?:corrected\\s*)?esr\\b"));
-        PARAMS.put("creatinine", new ParamInfo("Creatinine", "mg/dL", 0.5, 1.5,
-            "creatinine(?:\\s*serum)?"));
-        PARAMS.put("pusCells", new ParamInfo("Urine Pus Cells", "cells/HPF", 0.0, 5.0,
-            "pus\\s*cells?"));
-        PARAMS.put("urineProtein", new ParamInfo("Urine Protein", "qualitative",
-            "protein"));
-        PARAMS.put("urineSugar", new ParamInfo("Urine Sugar", "mg/dL", 0.0, 139.0,
-            "rbs|sugar|glucose"));
-        PARAMS.put("urineRbc", new ParamInfo("Urine RBC", "cells/HPF", 0.0, 2.0,
-            "red\\s*blood\\s*cells?|urine\\s*rbc"));
+    private static List<ParamDef> PARAM_DEFS;
+
+    private static synchronized List<ParamDef> getParamDefs() {
+        if (PARAM_DEFS == null) {
+            PARAM_DEFS = List.of(
+                new ParamDef("Haemoglobin", 13.5, 17.5, "g/dL",
+                    "haemoglobin", "hemoglobin"),
+                new ParamDef("RBC Count", 4.5, 5.9, "milli./cu.mm",
+                    "rbc count", "rbcs count", "rbc's count"),
+                new ParamDef("PCV / HCT", 37.0, 53.0, "%",
+                    "packed cell volume", "pcv", "hct"),
+                new ParamDef("MCV", 80.0, 100.0, "fL",
+                    "mean corpuscular volume", "mcv"),
+                new ParamDef("MCH", 26.0, 34.0, "pg",
+                    "mean corpuscular hemoglobin", "mean corpuscular haemoglobin", " mch "),
+                new ParamDef("MCHC", 32.0, 36.0, "g/dL",
+                    "mchc", "mean corpuscular hb conc", "mean corpuscular hemoglobin concentration"),
+                new ParamDef("RDW-CV", 11.0, 16.0, "%",
+                    "rdw-cv", "rdw cv", "rdw_cv"),
+                new ParamDef("Total WBC Count", 4500, 11000, "/cumm",
+                    "total wbc count", "total wbcs count", "total wbc's count", "total leucocyte"),
+                new ParamDef("Neutrophils", 35.0, 75.0, "%",
+                    "neutrophils"),
+                new ParamDef("Lymphocytes", 24.0, 44.0, "%",
+                    "lymphocytes"),
+                new ParamDef("Monocytes", 2.0, 12.0, "%",
+                    "monocytes"),
+                new ParamDef("Eosinophils", 0.0, 6.0, "%",
+                    "eosinophils"),
+                new ParamDef("Basophils", 0.0, 1.0, "%",
+                    "basophils"),
+                new ParamDef("Platelet Count", 1.5, 4.5, "Lakh/cumm",
+                    "platelet count", "platelets count"),
+                new ParamDef("ESR", 0.0, 15.0, "mm/hr",
+                    "corrected esr", "esr"),
+                new ParamDef("Creatinine", 0.5, 1.5, "mg/dL",
+                    "creatinine serum", "creatinine"),
+                new ParamDef("Urine Pus Cells", 0.0, 5.0, "cells/HPF",
+                    "pus cells"),
+                new ParamDef("Urine Protein", "qualitative",
+                    "protein"),
+                new ParamDef("Urine Sugar", "qualitative",
+                    "sugar", "glucose", "rbs"),
+                new ParamDef("Urine RBC", 0.0, 2.0, "cells/HPF",
+                    "red blood cells")
+            );
+        }
+        return PARAM_DEFS;
     }
 
     public ReportAnalysisResult analyze(byte[] fileBytes) throws Exception {
         String text = extractTextRaw(fileBytes);
-        return parseReport(text, detectVendor(text));
+        String vendor = detectVendor(text);
+        return parseReport(text, vendor);
     }
 
     public String extractTextOnly(byte[] fileBytes) throws Exception {
@@ -144,34 +147,14 @@ public class ReportAnalyzerService {
         ReportAnalysisResult result = new ReportAnalysisResult();
         result.setVendor(vendor);
 
-        PatientInfo patient = new PatientInfo();
-        patient.setName(extractName(text));
-        patient.setAge(extractAge(text));
-        patient.setSex(extractSex(text));
-        patient.setDate(extractDate(text));
-        result.setPatient(patient);
+        result.setPatient(extractPatientInfo(text));
 
-        int parsed = 0;
+        String[] lines = text.split("\\n");
         List<AlertItem> alerts = new ArrayList<>();
+        int parsed = 0;
 
-        for (Map.Entry<String, ParamInfo> e : PARAMS.entrySet()) {
-            String key = e.getKey();
-            ParamInfo info = e.getValue();
-            boolean isShivani = "Shivani Diagnostic Centre".equals(vendor);
-
-            ParameterResult pr;
-            if ("urineSugar".equals(key) && isShivani) {
-                pr = parseNumericParam(text, info);
-            } else if ("urineProtein".equals(key)) {
-                pr = parseQualitativeParam(text, info);
-            } else if ("urineSugar".equals(key)) {
-                pr = parseQualitativeParam(text, info);
-            } else if ("pusCells".equals(key)) {
-                pr = parsePusCells(text, info);
-            } else {
-                pr = parseNumericParam(text, info);
-            }
-
+        for (ParamDef def : getParamDefs()) {
+            ParameterResult pr = findParameter(lines, def, vendor);
             result.getParameters().add(pr);
             if (!"NOT_FOUND".equals(pr.getStatus())) parsed++;
 
@@ -197,223 +180,171 @@ public class ReportAnalyzerService {
         return result;
     }
 
-    private ParameterResult parseNumericParam(String text, ParamInfo info) {
+    private ParameterResult findParameter(String[] lines, ParamDef def, String vendor) {
+        for (int i = 0; i < lines.length; i++) {
+            String lineLower = lines[i].toLowerCase().trim();
+            boolean matches = false;
+            for (String alias : def.aliases) {
+                if (lineLower.contains(alias.toLowerCase())) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) continue;
+
+            if (def.qualitative) {
+                return extractQualitative(lines, i, def);
+            }
+
+            if ("Urine Pus Cells".equals(def.name)) {
+                Pattern rangeResult = Pattern.compile("(\\d+)\\s*[-\\u2013]\\s*(\\d+)\\s*cells", Pattern.CASE_INSENSITIVE);
+                Matcher rm = rangeResult.matcher(lines[i]);
+                if (rm.find()) {
+                    return buildResult(def, Double.parseDouble(rm.group(1)));
+                }
+            }
+
+            if ("ESR".equals(def.name) && i + 1 < lines.length) {
+                String combined = lines[i] + " " + lines[i + 1];
+                Double val = extractResultValue(combined);
+                if (val != null) return buildResult(def, val);
+            }
+
+            String searchText = lines[i];
+            if (i + 1 < lines.length) searchText += " " + lines[i + 1];
+            if (i + 2 < lines.length) searchText += " " + lines[i + 2];
+
+            Double val = extractResultValue(searchText);
+            if (val != null) return buildResult(def, val);
+        }
+
+        return notFound(def);
+    }
+
+    private Double extractResultValue(String text) {
+        String cleaned = text.replaceAll("(\\d+\\.?\\d*)\\s*[-\\u2013]\\s*(\\d+\\.?\\d*)", " RANGE ");
+        Pattern p = Pattern.compile("(?<![\\d.])\\b(\\d+(?:[.,]\\d+)?)\\b(?!\\s*[-\\u2013]\\s*\\d)");
+        Matcher m = p.matcher(cleaned);
+        while (m.find()) {
+            String numStr = m.group(1).replace(",", "");
+            try {
+                double val = Double.parseDouble(numStr);
+                if (numStr.replace(".", "").length() <= 6) {
+                    return val;
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+        return null;
+    }
+
+    private ParameterResult extractQualitative(String[] lines, int lineIndex, ParamDef def) {
+        Pattern p = Pattern.compile("(?i)(nil|absent|negative|normal|present|\\++)");
+        Matcher m = p.matcher(lines[lineIndex]);
+        if (m.find()) {
+            String val = m.group(1).toLowerCase();
+            boolean isNormal = val.matches("nil|absent|negative|normal");
+            ParameterResult r = new ParameterResult();
+            r.setName(def.name);
+            r.setValue(val);
+            r.setUnit("qualitative");
+            r.setStatus(isNormal ? "NORMAL" : "ABNORMAL");
+            return r;
+        }
+        return notFound(def);
+    }
+
+    private ParameterResult buildResult(ParamDef def, double val) {
         ParameterResult pr = new ParameterResult();
-        pr.setName(info.displayName);
-        pr.setUnit(info.unit);
-        pr.setRangeMin(info.min);
-        pr.setRangeMax(info.max);
+        pr.setName(def.name);
+        pr.setUnit(def.unit);
+        pr.setRangeMin(def.min);
+        pr.setRangeMax(def.max);
+        pr.setValue(String.valueOf(val));
+        if (val < def.min) pr.setStatus("LOW");
+        else if (val > def.max) pr.setStatus("HIGH");
+        else pr.setStatus("NORMAL");
+        return pr;
+    }
 
-        String val = null;
+    private ParameterResult notFound(ParamDef def) {
+        ParameterResult pr = new ParameterResult();
+        pr.setName(def.name);
+        pr.setUnit(def.unit);
+        pr.setRangeMin(def.qualitative ? null : def.min);
+        pr.setRangeMax(def.qualitative ? null : def.max);
+        pr.setValue("");
+        pr.setStatus("NOT_FOUND");
+        return pr;
+    }
 
-        if (info.nameRegex.contains("esr")) {
-            val = extractEsr(text);
-            if (val != null) {
-                trySetNumeric(pr, val);
-                if (!"NOT_FOUND".equals(pr.getStatus())) return pr;
+    private PatientInfo extractPatientInfo(String text) {
+        PatientInfo info = new PatientInfo();
+
+        Pattern nameP = Pattern.compile(
+            "(?i)(?:^|name\\s*[:.]?\\s*)((?:Mr|Mrs|Ms|Dr|MR|MRS|MS)\\.?\\s+[A-Z][a-zA-Z\\s]{2,30}?)(?=\\s{2,}|\\n|$|Sample|Sex|Ref)",
+            Pattern.MULTILINE);
+        Matcher nm = nameP.matcher(text);
+        if (nm.find()) info.setName(nm.group(1).trim());
+
+        if (info.getName().isEmpty()) {
+            Pattern nameP2 = Pattern.compile(
+                "(?i)(?:patient\\s*name|patient|name)\\s*[:.]?\\s*([A-Z][a-zA-Z\\s.]+?)(?=\\s{2,}|\\n|Sex|Age|Ref|Sample|$)",
+                Pattern.MULTILINE);
+            Matcher nm2 = nameP2.matcher(text);
+            if (nm2.find()) {
+                String n = nm2.group(1).trim();
+                if (n.length() > 2) info.setName(n);
             }
         }
 
-        val = extractFirstValue(text, info.nameRegex);
-        if (val != null) {
-            trySetNumeric(pr, val);
-            if (!"NOT_FOUND".equals(pr.getStatus())) return pr;
+        Pattern ageP = Pattern.compile(
+            "(?i)(?:sex/age|age)\\s*[:.]?\\s*(?:male|female|m|f)?\\s*/\\s*(\\d{1,3})\\s*years?");
+        Matcher am = ageP.matcher(text);
+        if (am.find()) info.setAge(am.group(1));
+
+        if (info.getAge().isEmpty()) {
+            Pattern ageP2 = Pattern.compile("(\\d{1,3})\\s*years?\\s*/[MF]", Pattern.CASE_INSENSITIVE);
+            Matcher am2 = ageP2.matcher(text);
+            if (am2.find()) info.setAge(am2.group(1));
         }
 
-        val = extractValueBeforeName(text, info.nameRegex);
-        if (val != null) {
-            trySetNumeric(pr, val);
-            if (!"NOT_FOUND".equals(pr.getStatus())) return pr;
+        if (info.getAge().isEmpty()) {
+            Pattern ageP3 = Pattern.compile(
+                "(?i)age\\s*[:.]?\\s*(\\d{1,3})\\s*(?:years?|yrs?|yr)\\b");
+            Matcher am3 = ageP3.matcher(text);
+            if (am3.find()) info.setAge(am3.group(1));
         }
 
-        pr.setValue("");
-        pr.setStatus("NOT_FOUND");
-        return pr;
-    }
-
-    private ParameterResult parsePusCells(String text, ParamInfo info) {
-        ParameterResult pr = new ParameterResult();
-        pr.setName(info.displayName);
-        pr.setUnit(info.unit);
-        pr.setRangeMin(info.min);
-        pr.setRangeMax(info.max);
-
-        Pattern p = Pattern.compile(
-            "(?i)pus\\s*cells?[^\\d\\n]{0,20}?(\\d+)\\s*[-\\u2013]",
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if (m.find()) {
-            trySetNumeric(pr, m.group(1));
-            if (!"NOT_FOUND".equals(pr.getStatus())) return pr;
+        Pattern sexP = Pattern.compile(
+            "(?i)(?:sex|gender)\\s*[:.]?\\s*(Male|Female|M|F)");
+        Matcher sm = sexP.matcher(text);
+        if (sm.find()) {
+            String s = sm.group(1).toUpperCase();
+            info.setSex("M".equals(s) ? "Male" : "F".equals(s) ? "Female" :
+                s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase());
         }
 
-        String val = extractFirstValue(text, info.nameRegex);
-        if (val != null) {
-            trySetNumeric(pr, val);
-            if (!"NOT_FOUND".equals(pr.getStatus())) return pr;
+        if (info.getSex().isEmpty()) {
+            Pattern sexP2 = Pattern.compile("\\b(Male|Female)\\b");
+            Matcher sm2 = sexP2.matcher(text);
+            if (sm2.find()) info.setSex(sm2.group(1));
         }
 
-        val = extractValueBeforeName(text, info.nameRegex);
-        if (val != null) {
-            trySetNumeric(pr, val);
-            if (!"NOT_FOUND".equals(pr.getStatus())) return pr;
-        }
+        Pattern dateP = Pattern.compile(
+            "(?i)(?:sample\\s*collected\\s*on|collected\\s*at|received|collection\\s*date|report\\s*date)\\s*[:.\\s]+(\\d{2}[/-][A-Za-z0-9]{2,3}[/-]\\d{4})");
+        Matcher dm = dateP.matcher(text);
+        if (dm.find()) info.setDate(dm.group(1));
 
-        pr.setValue("");
-        pr.setStatus("NOT_FOUND");
-        return pr;
-    }
-
-    private ParameterResult parseQualitativeParam(String text, ParamInfo info) {
-        ParameterResult pr = new ParameterResult();
-        pr.setName(info.displayName);
-        pr.setUnit(info.unit);
-        pr.setRangeMin(info.min);
-        pr.setRangeMax(info.max);
-
-        Pattern p = Pattern.compile(
-            "(?i)" + info.nameRegex + "[^\\n]{0,20}?\\b(Nil|Absent|Negative|Normal|Present|\\+{1,4})\\b");
-        Matcher m = p.matcher(text);
-        if (m.find()) {
-            String raw = m.group(1);
-            pr.setRawText(raw);
-            String lower = raw.toLowerCase();
-            if ("nil".equals(lower) || "absent".equals(lower) || "negative".equals(lower) || "normal".equals(lower)) {
-                pr.setValue(raw);
-                pr.setStatus("NORMAL");
-            } else {
-                pr.setValue(raw);
-                pr.setStatus("ABNORMAL");
-            }
-            return pr;
-        }
-
-        pr.setValue("");
-        pr.setStatus("NOT_FOUND");
-        return pr;
-    }
-
-    private String extractEsr(String text) {
-        Pattern p = Pattern.compile(
-            "(?i)(?:corrected\\s*)?esr[^\\d\\n]*?\\n\\s*(\\d+\\.?\\d*)",
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if (m.find()) return m.group(1);
-        return null;
-    }
-
-    private String extractFirstValue(String text, String nameRegex) {
-        Pattern p = Pattern.compile(
-            "(?i)" + nameRegex + "[^\\d\\n]{0,40}?" + NUM + NOT_RANGE,
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if (m.find()) return m.group(1).replace(",", "");
-        return null;
-    }
-
-    private String extractValueBeforeName(String text, String nameRegex) {
-        Pattern p = Pattern.compile(
-            "(?i)" + NUM + "[ \\t]+" + nameRegex + "\\b",
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if (m.find()) return m.group(1).replace(",", "");
-        return null;
-    }
-
-    private void trySetNumeric(ParameterResult pr, String raw) {
-        try {
-            String cleaned = raw.replace(",", "");
-            double val = Double.parseDouble(cleaned);
-            pr.setValue(cleaned);
-            pr.setRawText(raw);
-            if (val < pr.getRangeMin()) pr.setStatus("LOW");
-            else if (val > pr.getRangeMax()) pr.setStatus("HIGH");
-            else pr.setStatus("NORMAL");
-        } catch (NumberFormatException e) {
-            pr.setValue(raw);
-            pr.setRawText(raw);
-            pr.setStatus("NOT_FOUND");
-        }
-    }
-
-    private String extractName(String text) {
-        Pattern p = Pattern.compile(
-            "(?i)\\bname\\s*[:.]?\\s*((?:Mr|Mrs|Ms|Dr)\\.?\\s+[A-Za-z\\s.]+?)(?=\\s{2,}|\\n|Sample|Sex|Ref|/|$)",
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if (m.find()) {
-            String n = m.group(1).trim();
-            if (n.length() > 2) return n;
-        }
-
-        p = Pattern.compile(
-            "(?i)(?:patient\\s*name|patient|name)\\s*[:.]?\\s*([A-Za-z\\s.]+?)(?=\\s{2,}|\\n|Sex|Age|Ref|Sample|$)",
-            Pattern.MULTILINE);
-        m = p.matcher(text);
-        if (m.find()) {
-            String n = m.group(1).trim();
-            if (n.length() > 2) return n;
-        }
-
-        p = Pattern.compile("([A-Z][a-z]+\\s+[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)");
-        m = p.matcher(text);
-        if (m.find()) return m.group(1).trim();
-
-        return "";
-    }
-
-    private String extractAge(String text) {
-        Pattern p = Pattern.compile(
-            "(?i)(?:sex/age|age)\\s*[:.]?\\s*(?:male|female)?\\s*/\\s*(\\d{1,3})\\s*(?:years?|yrs?|yr)",
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if (m.find()) return m.group(1);
-
-        p = Pattern.compile(
-            "(?i)age\\s*[:.]?\\s*(\\d{1,3})\\s*(?:years?|yrs?|yr)",
-            Pattern.MULTILINE);
-        m = p.matcher(text);
-        if (m.find()) return m.group(1);
-
-        p = Pattern.compile(
-            "(?i)(\\d{1,3})\\s*(?:years?|yrs?|yr)\\b");
-        m = p.matcher(text);
-        if (m.find()) return m.group(1);
-
-        return "";
-    }
-
-    private String extractSex(String text) {
-        Pattern p = Pattern.compile(
-            "(?i)(?:sex|gender)\\s*[:.]?\\s*(Male|Female|M|F)",
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if (m.find()) {
-            String s = m.group(1).toUpperCase();
-            if ("M".equals(s)) return "Male";
-            if ("F".equals(s)) return "Female";
-            return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
-        }
-
-        p = Pattern.compile("\\b(Male|Female)\\b");
-        m = p.matcher(text);
-        if (m.find()) return m.group(1);
-
-        return "";
-    }
-
-    private String extractDate(String text) {
-        Pattern p = Pattern.compile(
-            "(?i)(?:sample\\s*collected\\s*on|date|collection\\s*date|report\\s*date)\\s*[:.]?\\s*(\\d{1,2}[-/][A-Za-z]{3}[-/]\\d{2,4}|\\d{1,2}[-/]\\d{1,2}[-/]\\d{2,4})",
-            Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        return m.find() ? m.group(1).trim() : "";
+        return info;
     }
 
     private String detectVendor(String text) {
-        String upper = text.toUpperCase();
-        if (upper.contains("SHIVANI")) return "Shivani Diagnostic Centre";
-        if (upper.contains("STAR LAB") || upper.contains("STARLAB705")) return "Star Lab";
+        String t = text.toLowerCase();
+        if (t.contains("shivani") || t.contains("bhawanipur")) return "Shivani Diagnostic Centre";
+        if (t.contains("starlab") || t.contains("star lab") ||
+            t.contains("chatrchaya") || t.contains("pithampur") ||
+            t.contains("dharambeer") || t.contains("patidar kirana"))
+            return "Star Lab";
         return "Unknown";
     }
 }
