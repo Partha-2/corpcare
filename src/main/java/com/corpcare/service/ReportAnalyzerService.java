@@ -64,7 +64,7 @@ public class ReportAnalyzerService {
                 new ParamDef("MCV", 80.0, 100.0, "fL",
                     "mean corpuscular volume", "mcv"),
                 new ParamDef("MCH", 26.0, 34.0, "pg",
-                    "mean corpuscular hemoglobin", "mean corpuscular haemoglobin", " mch "),
+                    "mean corpuscular hemoglobin", "mean corpuscular haemoglobin", "mch"),
                 new ParamDef("MCHC", 32.0, 36.0, "g/dL",
                     "mchc", "mean corpuscular hb conc", "mean corpuscular hemoglobin concentration"),
                 new ParamDef("RDW-CV", 11.0, 16.0, "%",
@@ -186,14 +186,28 @@ public class ReportAnalyzerService {
             boolean matches = false;
             for (String alias : def.aliases) {
                 if (lineLower.contains(alias.toLowerCase())) {
+                    if ("MCH".equals(def.name) && alias.equals("mch") && lineLower.contains("mchc")) {
+                        continue;
+                    }
                     matches = true;
                     break;
                 }
             }
             if (!matches) continue;
 
-            if (def.qualitative) {
+            if (def.qualitative && !"Urine Sugar".equals(def.name)) {
                 return extractQualitative(lines, i, def);
+            }
+
+            if ("Urine Sugar".equals(def.name)) {
+                Double val = tryNumericSugar(lines, i);
+                if (val != null) {
+                    ParamDef numericSugar = new ParamDef("Urine Sugar", 0.0, 139.0, "mg/dL", "sugar", "glucose", "rbs");
+                    return buildResult(numericSugar, val);
+                }
+                ParameterResult qual = extractQualitative(lines, i, def);
+                if (qual != null && !"NOT_FOUND".equals(qual.getStatus())) return qual;
+                continue;
             }
 
             if ("Urine Pus Cells".equals(def.name)) {
@@ -233,6 +247,19 @@ public class ReportAnalyzerService {
                     return val;
                 }
             } catch (NumberFormatException ignored) {}
+        }
+        return null;
+    }
+
+    private Double tryNumericSugar(String[] lines, int lineIndex) {
+        String search = lines[lineIndex];
+        if (lineIndex + 1 < lines.length) search += " " + lines[lineIndex + 1];
+        Pattern p = Pattern.compile("(?:rbs|sugar|glucose)[^\\d\\n]{0,30}?(\\d+(\\.\\d+)?)", Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(search);
+        if (m.find()) {
+            try {
+                return Double.parseDouble(m.group(1).replace(",", ""));
+            } catch (NumberFormatException e) { /* fall through */ }
         }
         return null;
     }
