@@ -34,11 +34,40 @@ export default function ReportAnalyzer() {
 
   const viewPast = async (id) => {
     try {
-      const r = await api.get(`/report-analyzer/history/${id}`)
-      const data = JSON.parse(r.data.reportData || '{}')
-      data._pastFileName = r.data.fileName
-      data._pastDate = r.data.createdAt
-      setResult(data)
+      const r = await api.get(`/report-analyzer/history/${id}/parameters`)
+      const flat = r.data
+      const params = [
+        { name: 'Haemoglobin', value: flat.haemoglobin, unit: 'g/dL', status: flat.haemoglobinStatus },
+        { name: 'RBC Count', value: flat.rbcCount, unit: 'milli./cu.mm', status: flat.rbcCountStatus },
+        { name: 'PCV / HCT', value: flat.pcvHct, unit: '%', status: flat.pcvHctStatus },
+        { name: 'MCV', value: flat.mcv, unit: 'fL', status: flat.mcvStatus },
+        { name: 'MCH', value: flat.mch, unit: 'pg', status: flat.mchStatus },
+        { name: 'MCHC', value: flat.mchc, unit: 'g/dL', status: flat.mchcStatus },
+        { name: 'RDW-CV', value: flat.rdwCv, unit: '%', status: flat.rdwCvStatus },
+        { name: 'Total WBC Count', value: flat.totalWbcCount, unit: '/cumm', status: flat.totalWbcCountStatus },
+        { name: 'Neutrophils', value: flat.neutrophils, unit: '%', status: flat.neutrophilsStatus },
+        { name: 'Lymphocytes', value: flat.lymphocytes, unit: '%', status: flat.lymphocytesStatus },
+        { name: 'Monocytes', value: flat.monocytes, unit: '%', status: flat.monocytesStatus },
+        { name: 'Eosinophils', value: flat.eosinophils, unit: '%', status: flat.eosinophilsStatus },
+        { name: 'Basophils', value: flat.basophils, unit: '%', status: flat.basophilsStatus },
+        { name: 'Platelet Count', value: flat.plateletCount, unit: 'Lakh/cumm', status: flat.plateletCountStatus },
+        { name: 'ESR', value: flat.esr, unit: 'mm/hr', status: flat.esrStatus },
+        { name: 'Creatinine', value: flat.creatinine, unit: 'mg/dL', status: flat.creatinineStatus },
+        { name: 'Urine Pus Cells', value: flat.urinePusCells, unit: 'cells/HPF', status: flat.urinePusCellsStatus },
+        { name: 'Urine Protein', value: flat.urineProtein, unit: 'qualitative', status: flat.urineProteinStatus },
+        { name: 'Urine Sugar', value: flat.urineSugar, unit: 'mg/dL', status: flat.urineSugarStatus },
+        { name: 'Urine RBC', value: flat.urineRbc, unit: 'cells/HPF', status: flat.urineRbcStatus },
+      ]
+      setResult({
+        _pastFileName: r.data.fileName || 'Report',
+        _pastDate: r.data.createdAt,
+        vendor: flat.vendor,
+        patient: { name: flat.patientName, age: flat.patientAge, sex: flat.patientSex },
+        parsedCount: params.filter(p => p.value !== null && p.value !== '').length,
+        confidence: flat.confidence,
+        parameters: params,
+        alerts: flat.criticalAlertMessage ? [{ message: flat.criticalAlertMessage }] : []
+      })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch { toast('Failed to load past report', 'error') }
   }
@@ -71,6 +100,7 @@ export default function ReportAnalyzer() {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       setResult(r.data)
+      loadHistory()
       if (r.data.alerts?.length > 0) {
         toast(`${r.data.alerts.length} parameter(s) out of normal range`, 'error')
       } else {
@@ -245,22 +275,40 @@ export default function ReportAnalyzer() {
                   {result.parameters?.map((p, i) => {
                     const colors = sc(p.status)
                     return (
-                      <tr key={i} style={{
-                        background: p.status === 'NOT_FOUND' ? 'transparent' : colors.bg,
+                      <tr style={{
+                        background: p.status === 'NORMAL' ? 'rgba(5,150,105,0.04)' :
+                                    p.status === 'LOW' ? 'rgba(234,179,8,0.08)' :
+                                    p.status === 'HIGH' ? 'rgba(220,38,38,0.08)' :
+                                    p.status === 'ABNORMAL' ? 'rgba(220,38,38,0.08)' : 'transparent',
+                        borderLeft: p.status === 'NORMAL' ? '3px solid #059669' :
+                                    p.status === 'LOW' ? '3px solid #eab308' :
+                                    p.status === 'HIGH' || p.status === 'ABNORMAL' ? '3px solid #dc2626' : '3px solid transparent',
                         fontStyle: p.status === 'NOT_FOUND' ? 'italic' : 'normal',
                         color: p.status === 'NOT_FOUND' ? 'var(--text-3)' : 'inherit'
                       }}>
                         <td style={{ fontWeight: 600 }}>{p.name}</td>
-                        <td>{p.status === 'NOT_FOUND' ? 'Not detected' : p.value}</td>
+                        <td style={{
+                          fontWeight: p.status === 'HIGH' || p.status === 'LOW' ? 700 : 400,
+                          color: p.status === 'HIGH' ? '#dc2626' : p.status === 'LOW' ? '#eab308' : 'inherit'
+                        }}>
+                          {p.status === 'NOT_FOUND' ? '—' : p.value}
+                        </td>
                         <td>{p.unit || '-'}</td>
                         <td>{p.rangeMin != null ? `${p.rangeMin}–${p.rangeMax}` : '-'}</td>
                         <td>
                           <span style={{
                             display: 'inline-block', padding: '2px 10px', borderRadius: 12,
                             fontSize: 11, fontWeight: 600,
-                            background: `${colors.badge}18`, color: colors.badge
+                            background: p.status === 'NORMAL' ? 'rgba(5,150,105,0.12)' :
+                                        p.status === 'LOW' ? 'rgba(234,179,8,0.15)' :
+                                        p.status === 'HIGH' ? 'rgba(220,38,38,0.12)' :
+                                        p.status === 'ABNORMAL' ? 'rgba(220,38,38,0.12)' : 'rgba(100,116,139,0.1)',
+                            color: p.status === 'NORMAL' ? '#059669' :
+                                   p.status === 'LOW' ? '#ca8a04' :
+                                   p.status === 'HIGH' ? '#dc2626' :
+                                   p.status === 'ABNORMAL' ? '#dc2626' : '#64748b'
                           }}>
-                            {p.status === 'NOT_FOUND' ? '⚫' : p.status === 'NORMAL' ? '🟢' : p.status === 'HIGH' ? '🔴' : p.status === 'LOW' ? '🔵' : '🔴'} {colors.label}
+                            {p.status === 'NOT_FOUND' ? '⚫ Not Found' : p.status === 'NORMAL' ? '🟢 Normal' : p.status === 'HIGH' ? '🔴 High' : p.status === 'LOW' ? '🟡 Low' : '🔴 Abnormal'}
                           </span>
                         </td>
                       </tr>

@@ -183,17 +183,17 @@ public class ReportAnalyzerService {
     private ParameterResult findParameter(String[] lines, ParamDef def, String vendor) {
         for (int i = 0; i < lines.length; i++) {
             String lineLower = lines[i].toLowerCase().trim();
-            boolean matches = false;
+            String matchedAlias = null;
             for (String alias : def.aliases) {
                 if (lineLower.contains(alias.toLowerCase())) {
                     if ("MCH".equals(def.name) && alias.equals("mch") && lineLower.contains("mchc")) {
                         continue;
                     }
-                    matches = true;
+                    matchedAlias = alias;
                     break;
                 }
             }
-            if (!matches) continue;
+            if (matchedAlias == null) continue;
 
             if (def.qualitative && !"Urine Sugar".equals(def.name)) {
                 return extractQualitative(lines, i, def);
@@ -218,21 +218,48 @@ public class ReportAnalyzerService {
                 }
             }
 
+            // Extract text AFTER the keyword on the current line (fixes picking wrong numbers)
+            int aliasIdx = lines[i].toLowerCase().indexOf(matchedAlias.toLowerCase());
+            String currentLineText = aliasIdx >= 0 ? lines[i].substring(aliasIdx) : lines[i];
+
+            Double val = extractResultValue(currentLineText);
+            if (val != null && isValidForParam(def.name, val)) return buildResult(def, val);
+
             if ("ESR".equals(def.name) && i + 1 < lines.length) {
-                String combined = lines[i] + " " + lines[i + 1];
-                Double val = extractResultValue(combined);
-                if (val != null) return buildResult(def, val);
+                String combined = currentLineText + " " + lines[i + 1];
+                val = extractResultValue(combined);
+                if (val != null && isValidForParam(def.name, val)) return buildResult(def, val);
             }
 
-            String searchText = lines[i];
+            String searchText = currentLineText;
             if (i + 1 < lines.length) searchText += " " + lines[i + 1];
             if (i + 2 < lines.length) searchText += " " + lines[i + 2];
 
-            Double val = extractResultValue(searchText);
-            if (val != null) return buildResult(def, val);
+            val = extractResultValue(searchText);
+            if (val != null && isValidForParam(def.name, val)) return buildResult(def, val);
         }
 
         return notFound(def);
+    }
+
+    private boolean isValidForParam(String name, double val) {
+        if (name.contains("RBC")) return val >= 1.0 && val <= 9.0;
+        if (name.contains("Haemoglobin") || name.contains("Hemoglobin")) return val >= 3.0 && val <= 25.0;
+        if (name.contains("WBC") || name.contains("Leucocyte")) return val >= 500 && val <= 50000;
+        if (name.contains("Platelet")) return val >= 0.5 && val <= 10.0;
+        if (name.contains("PCV") || name.contains("HCT")) return val >= 10.0 && val <= 70.0;
+        if (name.contains("MCV")) return val >= 40.0 && val <= 150.0;
+        if (name.contains("MCH")) return val >= 15.0 && val <= 50.0;
+        if (name.contains("RDW")) return val >= 5.0 && val <= 30.0;
+        if (name.contains("Neutrophil") || name.contains("Lymphocyte") ||
+            name.contains("Monocyte") || name.contains("Eosinophil") || name.contains("Basophil"))
+            return val >= 0.0 && val <= 100.0;
+        if (name.contains("ESR")) return val >= 0.0 && val <= 200.0;
+        if (name.contains("Creatinine")) return val >= 0.1 && val <= 20.0;
+        if (name.contains("Sugar") || name.contains("Glucose") || name.contains("RBS")) return val >= 20.0 && val <= 600.0;
+        if (name.contains("Pus Cells")) return val >= 0.0 && val <= 50.0;
+        if (name.contains("RBC")) return val >= 0.0 && val <= 50.0;
+        return val >= 0.0 && val <= 100000.0;
     }
 
     private Double extractResultValue(String text) {
