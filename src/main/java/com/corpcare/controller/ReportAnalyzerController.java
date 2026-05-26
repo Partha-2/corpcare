@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/report-analyzer")
@@ -84,7 +86,54 @@ public class ReportAnalyzerController {
         if (report == null || !report.getEmployeeId().equals(jwtUser.userId())) {
             return ResponseEntity.status(404).body(Map.of("error", "Report not found"));
         }
-        return ResponseEntity.ok(report);
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", report.getId());
+        result.put("employeeId", report.getEmployeeId());
+        result.put("fileName", report.getFileName());
+        result.put("vendor", report.getVendor());
+        result.put("patientName", report.getPatientName());
+        result.put("patientAge", report.getPatientAge());
+        result.put("patientSex", report.getPatientSex());
+        result.put("patientDate", report.getPatientDate());
+        result.put("parsedCount", report.getParsedCount());
+        result.put("confidence", report.getConfidence());
+        result.put("createdAt", report.getCreatedAt());
+        try {
+            ReportAnalysisResult parsed = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(report.getReportData(), ReportAnalysisResult.class);
+            result.put("patient", parsed.getPatient());
+            result.put("parameters", parsed.getParameters());
+            result.put("alerts", parsed.getAlerts());
+        } catch (Exception e) {
+            result.put("parameters", List.of());
+            result.put("alerts", List.of());
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/history/{id}/parameters")
+    public ResponseEntity<?> historyParameters(@PathVariable Long id, Authentication auth) {
+        if (!(auth.getPrincipal() instanceof com.corpcare.config.JwtAuthFilter.JwtUser jwtUser)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+        ReportAnalysis report = repo.findById(id).orElse(null);
+        if (report == null || !report.getEmployeeId().equals(jwtUser.userId())) {
+            return ResponseEntity.status(404).body(Map.of("error", "Report not found"));
+        }
+        try {
+            ReportAnalysisResult parsed = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(report.getReportData(), ReportAnalysisResult.class);
+            Map<String, Object> result = new HashMap<>();
+            result.put("patientName", report.getPatientName());
+            result.put("patientAge", report.getPatientAge());
+            result.put("patientSex", report.getPatientSex());
+            result.put("vendor", report.getVendor());
+            result.put("parameters", parsed.getParameters());
+            result.put("alerts", parsed.getAlerts());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("parameters", List.of(), "alerts", List.of()));
+        }
     }
 
     private void saveReport(String filename, ReportAnalysisResult result, Long employeeId) {
