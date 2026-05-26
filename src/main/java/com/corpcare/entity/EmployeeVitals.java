@@ -22,12 +22,12 @@ public class EmployeeVitals {
     private Employee employee;
 
     @Positive
-    @DecimalMin("20") @DecimalMax("300")
+    @DecimalMin("100") @DecimalMax("250")
     @Column(nullable = false)
     private Double height;
 
     @Positive
-    @DecimalMin("1") @DecimalMax("500")
+    @DecimalMin("30") @DecimalMax("150")
     @Column(nullable = false)
     private Double weight;
 

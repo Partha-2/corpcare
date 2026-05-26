@@ -7,13 +7,13 @@ import jakarta.validation.constraints.Positive;
 
 public class EmployeeVitalsRequest {
     @Positive
-    @DecimalMin(value = "20", message = "Height must be at least 20 cm")
-    @DecimalMax(value = "300", message = "Height cannot exceed 300 cm")
+    @DecimalMin(value = "100", message = "Height must be at least 100 cm")
+    @DecimalMax(value = "250", message = "Height cannot exceed 250 cm")
     private Double height;
 
     @Positive
-    @DecimalMin(value = "1", message = "Weight must be at least 1 kg")
-    @DecimalMax(value = "500", message = "Weight cannot exceed 500 kg")
+    @DecimalMin(value = "30", message = "Weight must be at least 30 kg")
+    @DecimalMax(value = "150", message = "Weight cannot exceed 150 kg")
     private Double weight;
 
     private String bloodPressure;
