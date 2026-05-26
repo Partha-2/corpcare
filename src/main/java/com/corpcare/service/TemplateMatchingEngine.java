@@ -10,149 +10,103 @@ import java.util.regex.Pattern;
 @Service
 public class TemplateMatchingEngine {
 
-    private static final String SEP = "[\\s:|]+";
-    private static final String QUAL = "(?:\\d+(?:\\.\\d+)?|Nil|Absent|Present|Trace|NEGATIVE|POSITIVE|Negative|Positive|normal|abnormal|[A-Za-z]+)";
+    private static final String PAREN = "(?:\\s*\\([^)]*\\))?";
+    private static final String VAL = "(\\d[\\d,.]*)";
+    private static final String QUAL = "(\\d+(?:\\.\\d+)?|Nil|Absent|Present|Trace|NEGATIVE|POSITIVE|Negative|Positive|normal|abnormal|[A-Za-z]+)";
 
     private final Map<String, Map<String, Pattern>> vendorPatterns = new LinkedHashMap<>();
 
     public TemplateMatchingEngine() {
-        Map<String, Pattern> shivani = new LinkedHashMap<>();
-        shivani.put("employeeName", Pattern.compile(
-            "(?:Name|Patient\\s*Name|Patient|PName)\\s*[:.]?\\s*(?!Ref\\.)([A-Za-z\\s.]+)", Pattern.CASE_INSENSITIVE));
-        shivani.put("age", Pattern.compile(
-            "(?:Age)\\s*[:.]?\\s*(\\d{1,3})\\b", Pattern.CASE_INSENSITIVE));
-        shivani.put("sex", Pattern.compile(
-            "(?:Sex|Gender)\\s*[:.]?\\s*(Male|Female|M|F)", Pattern.CASE_INSENSITIVE));
-        shivani.put("bloodGroup", Pattern.compile(
-            "(?:Blood\\s*Group|Blood\\s*Type|B\\s*Group|Blood\\s*Grp|BG)\\s*[:.]?\\s*([A-Za-z+\\-\\d]+)", Pattern.CASE_INSENSITIVE));
-        shivani.put("hemoglobin", Pattern.compile(
-            "(?:Haemoglobin|Hemoglobin|Hb|HGB|Haemoglobin\\s*\\(Hb\\)|Hb\\s*\\(Haemoglobin\\))\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("rbcCount", Pattern.compile(
-            "(?:RBC|RBC\\s*Count|Red\\s*Blood\\s*Cells|Red\\s*Cell\\s*Count|RBC\\s*\\(.*Mill\\))\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("wbcCount", Pattern.compile(
-            "(?:WBC|WBC\\s*Count|White\\s*Blood\\s*Cells|Total\\s*WBC|White\\s*Cell\\s*Count|TLC|Total\\s*Leucocyte|WBC\\s*\\(.*Total\\))\\s*[:|]?\\s*(\\d[\\d,\\.]*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("plateletCount", Pattern.compile(
-            "(?:Platelet|Platelets|PLT|Platelet\\s*Count|Thrombocyte|PLT\\s*Count)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("esr", Pattern.compile(
-            "(?:ESR|Erythrocyte\\s*Sedimentation|Sed\\s*Rate|E\\.?S\\.?R\\.?|Corrected\\s*ESR)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("creatinine", Pattern.compile(
-            "(?:Creatinine|Serum\\s*Creatinine|S\\.?\\s*Creatinine|Creat)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("urea", Pattern.compile(
-            "(?:Urea|Blood\\s*Urea|BUN|Serum\\s*Urea|S\\.?\\s*Urea)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("bloodSugar", Pattern.compile(
-            "(?:Blood\\s*Sugar|Sugar|FBS|Fasting|Random\\s*Sugar|RBS|Glucose|Blood\\s*Glucose|Fasting\\s*Sugar|PPBS|Post\\s*Prandial)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("sgpt", Pattern.compile(
-            "(?:SGPT|ALT|Alanine\\s*Aminotransferase|GPT|Alanine\\s*Transaminase|S\\.?G\\.?P\\.?T\\.?)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("sgot", Pattern.compile(
-            "(?:SGOT|AST|Aspartate\\s*Aminotransferase|GOT|Aspartate\\s*Transaminase|S\\.?G\\.?O\\.?T\\.?)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("urinePH", Pattern.compile(
-            "(?:Urine\\s*pH|pH\\s*\\(Urine\\)|Urine\\s*Reaction|pH|U\\.?\\s*pH)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("specificGravity", Pattern.compile(
-            "(?:Specific\\s*Gravity|Sp\\.?\\s*Gravity|S\\.?G\\.?|Sp\\s*Grav|Sp\\.?\\s*Gr\\.?)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("urineProtein", Pattern.compile(
-            "(?:Urine\\s*Protein|Protein\\s*Urine|U\\.?\\s*Protein|Urine\\s*Albumin|Albumin|Protein)\\s*[:|]?\\s*(" + QUAL + ")(?:\\s|$)", Pattern.CASE_INSENSITIVE));
-        shivani.put("urineGlucose", Pattern.compile(
-            "(?:Urine\\s*Glucose|Glucose\\s*Urine|U\\.?\\s*Glucose|Urine\\s*Sugar|Sugar\\s*Urine|Glucose)\\s*[:|]?\\s*(" + QUAL + ")(?:\\s|$)", Pattern.CASE_INSENSITIVE));
-        shivani.put("height", Pattern.compile(
-            "(?:Height|Height\\s*cm|Height\\s*in\\s*cm|Ht)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        shivani.put("weight", Pattern.compile(
-            "(?:Weight|Weight\\s*kg|Weight\\s*in\\s*kg|Wt)\\s*[:|]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        vendorPatterns.put("SHIVANI_TEMPLATE", shivani);
+        vendorPatterns.put("SHIVANI_TEMPLATE", buildShivani());
+        vendorPatterns.put("STARLAB_TEMPLATE", buildStarlab());
+        vendorPatterns.put("GENERIC_TEMPLATE", buildGeneric());
+    }
 
-        Map<String, Pattern> starlab = new LinkedHashMap<>();
-        starlab.put("employeeName", Pattern.compile(
-            "(?:Name|Patient|Patient\\s*Name|Name\\s*of\\s*Patient)\\s*[:.]?\\s*(?!Ref\\.)([A-Za-z\\s.]+)", Pattern.CASE_INSENSITIVE));
-        starlab.put("age", Pattern.compile(
-            "(?:Age|Age\\s*/\\s*Sex)\\s*[:.]?\\s*(\\d{1,3})", Pattern.CASE_INSENSITIVE));
-        starlab.put("sex", Pattern.compile(
-            "(?:Sex|Gender|Age\\s*/\\s*Sex)\\s*[:.]?\\s*(Male|Female|M|F)", Pattern.CASE_INSENSITIVE));
-        starlab.put("bloodGroup", Pattern.compile(
-            "(?:Blood\\s*Group|Blood\\s*Type|B\\.?\\s*Group|Blood\\s*Grp)\\s*[:.]?\\s*([A-Za-z+\\-\\d]+)", Pattern.CASE_INSENSITIVE));
+    private Map<String, Pattern> buildShivani() {
+        Map<String, Pattern> m = new LinkedHashMap<>();
+        String sep = PAREN + "\\s*[:|]?\\s*";
+        m.put("employeeName", p("(?:Name|Patient\\s*Name|Patient|PName)\\s*[:.]?\\s*(?!Ref\\.)([A-Za-z\\s.]+)"));
+        m.put("age", p("(?:Age)\\s*[:.]?\\s*(\\d{1,3})\\b"));
+        m.put("sex", p("(?:Sex|Gender)\\s*[:.]?\\s*(Male|Female|M|F)"));
+        m.put("bloodGroup", p("(?:Blood\\s*Group|Blood\\s*Type|B\\s*Group|Blood\\s*Grp|BG)\\s*[:.]?\\s*([A-Za-z+\\-\\d]+)"));
+        m.put("hemoglobin", p("(?:Haemoglobin|Hemoglobin|Hb|HGB)" + sep + VAL));
+        m.put("rbcCount", p("(?:RBC|RBC\\s*Count|Red\\s*Blood\\s*Cells?)" + sep + VAL));
+        m.put("wbcCount", p("(?:WBC|WBC\\s*Count|White\\s*Blood\\s*Cells?|Total\\s*WBC|TLC|Total\\s*Leucocyte)" + sep + VAL));
+        m.put("plateletCount", p("(?:Platelet|Platelets|PLT|Platelet\\s*Count|Thrombocyte)" + sep + VAL));
+        m.put("esr", p("(?:ESR|Erythrocyte\\s*Sedimentation|Sed\\s*Rate)" + sep + VAL));
+        m.put("creatinine", p("(?:Creatinine|Serum\\s*Creatinine|S\\.?\\s*Creatinine|Creat)" + sep + VAL));
+        m.put("urea", p("(?:Urea|Blood\\s*Urea|BUN|Serum\\s*Urea)" + sep + VAL));
+        m.put("bloodSugar", p("(?:Blood\\s*Sugar|Sugar|FBS|Fasting|RBS|Random|Glucose|Blood\\s*Glucose|PPBS|Post\\s*Prandial)" + sep + VAL));
+        m.put("sgpt", p("(?:SGPT|ALT|Alanine\\s*Aminotransferase|GPT)" + sep + VAL));
+        m.put("sgot", p("(?:SGOT|AST|Aspartate\\s*Aminotransferase|GOT)" + sep + VAL));
+        m.put("urinePH", p("(?:Urine\\s*pH|pH|U\\.?\\s*pH|Urine\\s*Reaction)" + sep + VAL));
+        m.put("specificGravity", p("(?:Specific\\s*Gravity|Sp\\.?\\s*Gr\\.?|S\\.?G\\.?)" + sep + VAL));
+        m.put("urineProtein", p("(?:Protein|Urine\\s*Protein|U\\.?\\s*Protein|Albumin)" + sep + QUAL + "(?:\\s|$)"));
+        m.put("urineGlucose", p("(?:Glucose|(?<!Blood )Sugar|Urine\\s*Glucose|Urine\\s*Sugar)" + sep + QUAL + "(?:\\s|$)"));
+        m.put("height", p("(?:Height|Ht)" + sep + VAL));
+        m.put("weight", p("(?:Weight|Wt)" + sep + VAL));
+        return m;
+    }
 
-        Pattern starlabLine = Pattern.compile(
-            "^\\s*(\\w[\\w\\s/()]+?)\\s{2,}(\\d[\\d,\\.]*)\\s{2,}([\\d\\.]+\\s*[-–]\\s*[\\d\\.]+|[\\d\\.]+)",
-            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private Map<String, Pattern> buildStarlab() {
+        Map<String, Pattern> m = new LinkedHashMap<>();
+        String sep = PAREN + "\\s*[:.]?\\s*";
+        m.put("employeeName", p("(?:Name|Patient|Patient\\s*Name|Name\\s*of\\s*Patient)\\s*[:.]?\\s*(?!Ref\\.)([A-Za-z\\s.]+)"));
+        m.put("age", p("(?:Age|Age\\s*/\\s*Sex)\\s*[:.]?\\s*(\\d{1,3})"));
+        m.put("sex", p("(?:Sex|Gender|Age\\s*/\\s*Sex)\\s*[:.]?\\s*(Male|Female|M|F)"));
+        m.put("bloodGroup", p("(?:Blood\\s*Group|Blood\\s*Type|B\\.?\\s*Group|Blood\\s*Grp)\\s*[:.]?\\s*([A-Za-z+\\-\\d]+)"));
+        String tblSep = "(?:\\s*\\([^)]*\\))?" + "[ \\t]{2,}";
+        m.put("hemoglobin", p("(?:Haemoglobin|Hemoglobin|Hb|HGB)" + tblSep + VAL));
+        m.put("rbcCount", p("(?:RBC\\s*Count|Red\\s*Blood\\s*Cells?|RBC)" + tblSep + VAL));
+        m.put("wbcCount", p("(?:Total\\s*WBC|WBC\\s*Count|White\\s*Blood\\s*Cells?|TLC)" + tblSep + VAL));
+        m.put("plateletCount", p("(?:Platelet\\s*Count|Platelets|PLT)" + tblSep + VAL));
+        m.put("esr", p("(?:ESR|Erythrocyte\\s*Sedimentation|Sed\\s*Rate)" + tblSep + VAL));
+        m.put("creatinine", p("(?:Creatinine|S\\.?\\s*Creatinine|Serum\\s*Creatinine)" + sep + VAL));
+        m.put("urea", p("(?:Urea|Blood\\s*Urea|BUN|Serum\\s*Urea)" + sep + VAL));
+        m.put("bloodSugar", p("(?:Blood\\s*Sugar|Sugar|FBS|Fasting|RBS|Random|Glucose|Blood\\s*Glucose)" + sep + VAL));
+        m.put("sgpt", p("(?:SGPT|ALT|Alanine\\s*Aminotransferase|GPT)" + sep + VAL));
+        m.put("sgot", p("(?:SGOT|AST|Aspartate\\s*Aminotransferase|GOT)" + sep + VAL));
+        m.put("urinePH", p("(?:Urine\\s*pH|pH|U\\.?\\s*pH|Urine\\s*Reaction)" + sep + VAL));
+        m.put("specificGravity", p("(?:Specific\\s*Gravity|Sp\\.?\\s*Gr\\.?|S\\.?G\\.?)" + sep + VAL));
+        m.put("urineProtein", p("(?:Protein|Urine\\s*Protein|U\\.?\\s*Protein|Albumin)" + sep + QUAL + "(?:\\s|$)"));
+        m.put("urineGlucose", p("(?:Glucose|(?<!Blood )Sugar|Urine\\s*Glucose|Urine\\s*Sugar)" + sep + QUAL + "(?:\\s|$)"));
+        m.put("height", p("(?:Height|Ht)" + sep + VAL));
+        m.put("weight", p("(?:Weight|Wt)" + sep + VAL));
+        return m;
+    }
 
-        String[] tableKeys = {"hemoglobin", "rbcCount", "wbcCount", "plateletCount", "esr"};
-        for (String k : tableKeys) starlab.put(k, starlabLine);
-
-        starlab.put("creatinine", Pattern.compile(
-            "(?:Creatinine|S\\.?\\s*Creatinine|Serum\\s*Creatinine)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        starlab.put("urea", Pattern.compile(
-            "(?:Urea|Blood\\s*Urea|BUN|Serum\\s*Urea|S\\.?\\s*Urea)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        starlab.put("bloodSugar", Pattern.compile(
-            "(?:Blood\\s*Sugar|Sugar|FBS|Fasting|RBS|Random|Glucose|Blood\\s*Glucose)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        starlab.put("sgpt", Pattern.compile(
-            "(?:SGPT|ALT|Alanine\\s*Aminotransferase|GPT)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        starlab.put("sgot", Pattern.compile(
-            "(?:SGOT|AST|Aspartate\\s*Aminotransferase|GOT)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        starlab.put("urinePH", Pattern.compile(
-            "(?:Urine\\s*pH|pH\\s*\\(Urine\\)|U\\.?\\s*pH|Urine\\s*Reaction)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        starlab.put("specificGravity", Pattern.compile(
-            "(?:Specific\\s*Gravity|Sp\\.?\\s*Gr\\.?|S\\.?G\\.?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        starlab.put("urineProtein", Pattern.compile(
-            "(?:Protein|Urine\\s*Protein|U\\.?\\s*Protein|Albumin|Urine\\s*Albumin)\\s*[:.]?\\s*(" + QUAL + ")(?:\\s|$)", Pattern.CASE_INSENSITIVE));
-        starlab.put("urineGlucose", Pattern.compile(
-            "(?:Glucose|Urine\\s*Glucose|U\\.?\\s*Glucose|Sugar\\s*Urine|Urine\\s*Sugar)\\s*[:.]?\\s*(" + QUAL + ")(?:\\s|$)", Pattern.CASE_INSENSITIVE));
-        starlab.put("height", Pattern.compile(
-            "(?:Height|Height\\s*cm|Ht\\.?)", Pattern.CASE_INSENSITIVE));
-        starlab.put("weight", Pattern.compile(
-            "(?:Weight|Weight\\s*kg|Wt\\.?)", Pattern.CASE_INSENSITIVE));
-        vendorPatterns.put("STARLAB_TEMPLATE", starlab);
-
-        Map<String, Pattern> generic = new LinkedHashMap<>();
-        generic.put("employeeName", Pattern.compile(
-            "(?:Name|Patient\\s*Name|Patient)\\s*[:.]?\\s*(?!Ref\\.)([A-Za-z\\s.]+)", Pattern.CASE_INSENSITIVE));
-        generic.put("age", Pattern.compile(
-            "(?:Age)\\s*[:.]?\\s*(\\d{1,3})", Pattern.CASE_INSENSITIVE));
-        generic.put("sex", Pattern.compile(
-            "(?:Sex|Gender)\\s*[:.]?\\s*(Male|Female|M|F)", Pattern.CASE_INSENSITIVE));
-        generic.put("bloodGroup", Pattern.compile(
-            "(?:Blood\\s*Group|Blood\\s*Type|B\\s*Group)\\s*[:.]?\\s*([A-Za-z+\\-\\d]+)", Pattern.CASE_INSENSITIVE));
-        generic.put("hemoglobin", Pattern.compile(
-            "(?:Haemoglobin|Hemoglobin|Hb|HGB)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("rbcCount", Pattern.compile(
-            "(?:RBC|RBC\\s*Count|Red\\s*Blood\\s*Cells)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("wbcCount", Pattern.compile(
-            "(?:WBC|WBC\\s*Count|White\\s*Blood\\s*Cells|Total\\s*WBC|TLC)\\s*[:.]?\\s*(\\d[\\d,\\.]*)", Pattern.CASE_INSENSITIVE));
-        generic.put("plateletCount", Pattern.compile(
-            "(?:Platelet|Platelets|PLT|Platelet\\s*Count)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("esr", Pattern.compile(
-            "(?:ESR|Erythrocyte\\s*Sedimentation|Sed\\s*Rate|Corrected\\s*ESR)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("creatinine", Pattern.compile(
-            "(?:Creatinine|Serum\\s*Creatinine|S\\.?\\s*Creatinine)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("urea", Pattern.compile(
-            "(?:Urea|Blood\\s*Urea|BUN|Serum\\s*Urea)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("bloodSugar", Pattern.compile(
-            "(?:Blood\\s*Sugar|Sugar|FBS|Fasting|RBS|Random|Glucose|Blood\\s*Glucose)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("sgpt", Pattern.compile(
-            "(?:SGPT|ALT|Alanine\\s*Aminotransferase|GPT)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("sgot", Pattern.compile(
-            "(?:SGOT|AST|Aspartate\\s*Aminotransferase|GOT)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("urinePH", Pattern.compile(
-            "(?:Urine\\s*pH|pH|U\\.?\\s*pH|Urine\\s*Reaction)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("specificGravity", Pattern.compile(
-            "(?:Specific\\s*Gravity|Sp\\.?\\s*Gravity|S\\.?G\\.?)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("urineProtein", Pattern.compile(
-            "(?:Protein|Urine\\s*Protein|Albumin)\\s*[:.]?\\s*(" + QUAL + ")(?:\\s|$)", Pattern.CASE_INSENSITIVE));
-        generic.put("urineGlucose", Pattern.compile(
-            "(?:Glucose|Urine\\s*Glucose|Sugar\\s*Urine)\\s*[:.]?\\s*(" + QUAL + ")(?:\\s|$)", Pattern.CASE_INSENSITIVE));
-        generic.put("height", Pattern.compile(
-            "(?:Height|Height\\s*cm|Height\\s*in\\s*cm|Ht)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        generic.put("weight", Pattern.compile(
-            "(?:Weight|Weight\\s*kg|Weight\\s*in\\s*kg|Wt)\\s*[:.]?\\s*(\\d+\\.?\\d*)", Pattern.CASE_INSENSITIVE));
-        vendorPatterns.put("GENERIC_TEMPLATE", generic);
+    private Map<String, Pattern> buildGeneric() {
+        Map<String, Pattern> m = new LinkedHashMap<>();
+        String sep = PAREN + "\\s*[:.]?\\s*";
+        m.put("employeeName", p("(?:Name|Patient\\s*Name|Patient)\\s*[:.]?\\s*(?!Ref\\.)([A-Za-z\\s.]+)"));
+        m.put("age", p("(?:Age)\\s*[:.]?\\s*(\\d{1,3})"));
+        m.put("sex", p("(?:Sex|Gender)\\s*[:.]?\\s*(Male|Female|M|F)"));
+        m.put("bloodGroup", p("(?:Blood\\s*Group|Blood\\s*Type|B\\s*Group)\\s*[:.]?\\s*([A-Za-z+\\-\\d]+)"));
+        m.put("hemoglobin", p("(?:Haemoglobin|Hemoglobin|Hb|HGB)" + sep + VAL));
+        m.put("rbcCount", p("(?:RBC|RBC\\s*Count|Red\\s*Blood\\s*Cells?)" + sep + VAL));
+        m.put("wbcCount", p("(?:WBC|WBC\\s*Count|White\\s*Blood\\s*Cells?|Total\\s*WBC|TLC)" + sep + VAL));
+        m.put("plateletCount", p("(?:Platelet|Platelets|PLT|Platelet\\s*Count)" + sep + VAL));
+        m.put("esr", p("(?:ESR|Erythrocyte\\s*Sedimentation|Sed\\s*Rate)" + sep + VAL));
+        m.put("creatinine", p("(?:Creatinine|Serum\\s*Creatinine|S\\.?\\s*Creatinine)" + sep + VAL));
+        m.put("urea", p("(?:Urea|Blood\\s*Urea|BUN|Serum\\s*Urea)" + sep + VAL));
+        m.put("bloodSugar", p("(?:Blood\\s*Sugar|Sugar|FBS|Fasting|RBS|Random|Glucose|Blood\\s*Glucose)" + sep + VAL));
+        m.put("sgpt", p("(?:SGPT|ALT|Alanine\\s*Aminotransferase|GPT)" + sep + VAL));
+        m.put("sgot", p("(?:SGOT|AST|Aspartate\\s*Aminotransferase|GOT)" + sep + VAL));
+        m.put("urinePH", p("(?:Urine\\s*pH|pH|U\\.?\\s*pH|Urine\\s*Reaction)" + sep + VAL));
+        m.put("specificGravity", p("(?:Specific\\s*Gravity|Sp\\.?\\s*Gr\\.?|S\\.?G\\.?)" + sep + VAL));
+        m.put("urineProtein", p("(?:Protein|Urine\\s*Protein|Albumin)" + sep + QUAL + "(?:\\s|$)"));
+        m.put("urineGlucose", p("(?:Glucose|(?<!Blood )Sugar|Urine\\s*Glucose|Urine\\s*Sugar)" + sep + QUAL + "(?:\\s|$)"));
+        m.put("height", p("(?:Height|Ht)" + sep + VAL));
+        m.put("weight", p("(?:Weight|Wt)" + sep + VAL));
+        return m;
     }
 
     public Map<String, String> extract(String text, String vendorFormat) {
         Map<String, String> extracted = new LinkedHashMap<>();
         Map<String, Pattern> patterns = vendorPatterns.getOrDefault(vendorFormat, vendorPatterns.get("GENERIC_TEMPLATE"));
-
-        String[] keys = {"employeeName", "age", "sex", "bloodGroup", "hemoglobin", "rbcCount",
-            "wbcCount", "plateletCount", "esr", "creatinine", "urea", "bloodSugar",
-            "sgpt", "sgot", "urinePH", "specificGravity", "urineProtein", "urineGlucose",
-            "height", "weight"};
-
+        String[] keys = {"employeeName","age","sex","bloodGroup","hemoglobin","rbcCount",
+            "wbcCount","plateletCount","esr","creatinine","urea","bloodSugar",
+            "sgpt","sgot","urinePH","specificGravity","urineProtein","urineGlucose","height","weight"};
         for (String key : keys) {
             Pattern p = patterns.get(key);
             if (p != null) {
@@ -162,24 +116,24 @@ public class TemplateMatchingEngine {
                 extracted.put(key, "Not Available");
             }
         }
-
         return extracted;
     }
 
     private String matchPattern(String text, Pattern pattern) {
         Matcher m = pattern.matcher(text);
         if (m.find()) {
-            if (m.groupCount() >= 1) {
-                return m.group(1).trim();
-            }
-            return m.group(0).trim();
+            return m.groupCount() >= 1 ? m.group(1).trim() : m.group(0).trim();
         }
         return null;
     }
 
     private String cleanValue(String v) {
         if (v == null || v.isBlank()) return v;
-        String cleaned = v.replaceAll("[^\\d.A-Za-z+\\-]", " ").trim().split("\\s+")[0];
-        return cleaned;
+        String cleaned = v.replaceAll("[^\\d.,A-Za-z+\\-].*$", "").trim();
+        return cleaned.isBlank() ? v.split("\\s+")[0] : cleaned;
+    }
+
+    private Pattern p(String regex) {
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     }
 }
