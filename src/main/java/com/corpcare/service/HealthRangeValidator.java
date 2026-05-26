@@ -30,8 +30,8 @@ public class HealthRangeValidator {
         RANGES.put("specificGravity", new RangeDef(1.005, 1.030, ""));
         RANGES.put("urineProtein", new RangeDef(0, 15, "mg/dL"));
         RANGES.put("urineGlucose", new RangeDef(0, 15, "mg/dL"));
-        RANGES.put("height", new RangeDef(150, 200, "cm"));
-        RANGES.put("weight", new RangeDef(50, 90, "kg"));
+        RANGES.put("pcv", new RangeDef(37, 53, "%"));
+        RANGES.put("mcv", new RangeDef(80, 100, "fL"));
     }
 
     public HealthParameter validate(String paramName, String rawValue, boolean isMale) {
@@ -135,6 +135,8 @@ public class HealthRangeValidator {
             case "specificGravity" -> "Specific Gravity";
             case "urineProtein" -> "Protein (Urine)";
             case "urineGlucose" -> "Glucose (Urine)";
+            case "pcv" -> "PCV/HCT";
+            case "mcv" -> "MCV";
             default -> key.substring(0, 1).toUpperCase() + key.substring(1);
         };
     }

@@ -43,8 +43,8 @@ public class TemplateMatchingEngine {
         m.put("specificGravity", p("(?:Specific\\s*Gravity|Sp\\.?\\s*Gr\\.?|S\\.?G\\.?)" + sep + VAL));
         m.put("urineProtein", p("(?:Protein|Urine\\s*Protein|U\\.?\\s*Protein|Albumin)" + sep + QUAL + "(?:\\s|$)"));
         m.put("urineGlucose", p("(?:Glucose|(?<!Blood )Sugar|Urine\\s*Glucose|Urine\\s*Sugar)" + sep + QUAL + "(?:\\s|$)"));
-        m.put("height", p("(?:Height|Ht)" + sep + VAL));
-        m.put("weight", p("(?:Weight|Wt)" + sep + VAL));
+        m.put("pcv", p("(?:PCV|Packed\\s*Cell\\s*Volume|HCT|Haematocrit|Hematocrit)" + sep + VAL));
+        m.put("mcv", p("(?:MCV|Mean\\s*Corpuscular\\s*Volume)" + sep + VAL));
         return m;
     }
 
@@ -70,8 +70,8 @@ public class TemplateMatchingEngine {
         m.put("specificGravity", p("(?:Specific\\s*Gravity|Sp\\.?\\s*Gr\\.?|S\\.?G\\.?)" + sep + VAL));
         m.put("urineProtein", p("(?:Protein|Urine\\s*Protein|U\\.?\\s*Protein|Albumin)" + sep + QUAL + "(?:\\s|$)"));
         m.put("urineGlucose", p("(?:Glucose|(?<!Blood )Sugar|Urine\\s*Glucose|Urine\\s*Sugar)" + sep + QUAL + "(?:\\s|$)"));
-        m.put("height", p("(?:Height|Ht)" + sep + VAL));
-        m.put("weight", p("(?:Weight|Wt)" + sep + VAL));
+        m.put("pcv", p("(?:PCV|Packed\\s*Cell\\s*Volume|HCT|Haematocrit|Hematocrit)" + sep + VAL));
+        m.put("mcv", p("(?:MCV|Mean\\s*Corpuscular\\s*Volume)" + sep + VAL));
         return m;
     }
 
@@ -96,8 +96,8 @@ public class TemplateMatchingEngine {
         m.put("specificGravity", p("(?:Specific\\s*Gravity|Sp\\.?\\s*Gr\\.?|S\\.?G\\.?)" + sep + VAL));
         m.put("urineProtein", p("(?:Protein|Urine\\s*Protein|Albumin)" + sep + QUAL + "(?:\\s|$)"));
         m.put("urineGlucose", p("(?:Glucose|(?<!Blood )Sugar|Urine\\s*Glucose|Urine\\s*Sugar)" + sep + QUAL + "(?:\\s|$)"));
-        m.put("height", p("(?:Height|Ht)" + sep + VAL));
-        m.put("weight", p("(?:Weight|Wt)" + sep + VAL));
+        m.put("pcv", p("(?:PCV|Packed\\s*Cell\\s*Volume|HCT|Haematocrit|Hematocrit)" + sep + VAL));
+        m.put("mcv", p("(?:MCV|Mean\\s*Corpuscular\\s*Volume)" + sep + VAL));
         return m;
     }
 
@@ -106,7 +106,7 @@ public class TemplateMatchingEngine {
         Map<String, Pattern> patterns = vendorPatterns.getOrDefault(vendorFormat, vendorPatterns.get("GENERIC_TEMPLATE"));
         String[] keys = {"employeeName","age","sex","bloodGroup","hemoglobin","rbcCount",
             "wbcCount","plateletCount","esr","creatinine","urea","bloodSugar",
-            "sgpt","sgot","urinePH","specificGravity","urineProtein","urineGlucose","height","weight"};
+            "sgpt","sgot","urinePH","specificGravity","urineProtein","urineGlucose","pcv","mcv"};
         for (String key : keys) {
             Pattern p = patterns.get(key);
             if (p != null) {

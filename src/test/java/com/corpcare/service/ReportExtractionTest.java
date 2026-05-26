@@ -67,7 +67,7 @@ class ReportExtractionTest {
         }
         System.out.println("Parameters extracted: " + count + "/20\n");
 
-        assertTrue(count >= 18, "Shivani: expected >= 18/20, got " + count);
+        assertTrue(count >= 20, "Shivani: expected >= 20/20, got " + count);
     }
 
     @Test
@@ -121,7 +121,7 @@ class ReportExtractionTest {
         }
         System.out.println("Parameters extracted: " + count + "/20\n");
 
-        assertTrue(count >= 18, "StarLab: expected >= 18/20, got " + count);
+        assertTrue(count >= 20, "StarLab: expected >= 20/20, got " + count);
     }
 
     @Test
@@ -181,6 +181,6 @@ class ReportExtractionTest {
         }
         System.out.println("Template Engine extraction: " + count + "/20\n");
 
-        assertTrue(count >= 18, "ReportAnalyzer: expected >= 18/20, got " + count);
+        assertTrue(count >= 20, "ReportAnalyzer: expected >= 20/20, got " + count);
     }
 }
