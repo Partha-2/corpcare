@@ -72,6 +72,7 @@ export default function EmployeeVitals() {
               <input type="number" step="0.1" value={form.weight} onChange={e => { setForm({...form, weight: e.target.value}); setErrors({...errors, weight: undefined}) }} required />
               <small style={{ color: 'var(--gray-500)' }}>Range: 30 - 150 kg</small>
               {errors.weight && <div style={{ color: '#dc3545', fontSize: 12, marginTop: 4 }}>{errors.weight}</div>}
+            </div>
             <div className="form-group">
               <label>Blood Pressure</label>
               <input placeholder="120/80" value={form.bloodPressure} onChange={e => setForm({...form, bloodPressure: e.target.value})} required />
