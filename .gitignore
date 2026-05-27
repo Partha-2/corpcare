@@ -29,3 +29,6 @@ Thumbs.db
 *.log
 /tmp/data/
 data/
+
+# Scripts with credentials
+run-live.sh
