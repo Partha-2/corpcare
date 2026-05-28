@@ -83,20 +83,122 @@ Appointment Booking
 
 Both notifications are **asynchronous** — the booking response is immediate, notifications fire in the background.
 
-## API Overview
+## API Reference
 
-See [docs/system-design/api-flow.md](docs/system-design/api-flow.md) for full API documentation with sequence diagrams.
+**Base URL (local):** `http://localhost:8080`  
+**Base URL (live):** `https://corpcare.onrender.com`
 
-| Resource | Key Endpoints |
-|----------|--------------|
-| Clients | `GET/POST /api/clients`, `PUT/DELETE /api/clients/{id}` |
-| Employees | `POST /api/clients/{id}/employees`, `POST /api/employees/verify` |
-| Hospitals | `GET/POST /api/hospitals`, `PUT/DELETE /api/hospitals/{id}` |
-| Slots | `GET /api/hospitals/{id}/slots/available?date=YYYY-MM-DD` |
-| Appointments | `POST /api/appointments`, `GET /api/appointments`, `PUT /api/appointments/{id}/cancel` |
-| Vitals | `GET/POST /api/employees/{id}/vitals` |
-| Chat | `POST /api/chat` (Groq AI proxy) |
-| Stats | `GET /api/stats` |
+All authenticated endpoints require header: `Authorization: Bearer {token}`
+
+---
+
+### Auth (no token required)
+
+| Method | URL | Body | Returns |
+|--------|-----|------|---------|
+| POST | `/api/auth/admin` | `{"password":"admin123"}` | `{ token, name }` |
+| POST | `/api/auth/employee` | `{"email":"...","employeeCode":"..."}` | `{ token, employee }` |
+| POST | `/api/auth/client` | `{"email":"...","password":"..."}` | `{ token, client }` |
+| POST | `/api/auth/hospital` | `{"email":"...","password":"..."}` | `{ token, hospital }` |
+
+---
+
+### Admin (password: `admin123`)
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/api/stats` | Dashboard statistics |
+| GET | `/api/clients` | List all clients |
+| POST | `/api/clients` | Create client |
+| GET | `/api/clients/{id}` | Get single client |
+| PUT | `/api/clients/{id}` | Update client |
+| DELETE | `/api/clients/{id}` | Delete client + employees + vitals |
+| GET | `/api/clients/{id}/employees` | List employees under client |
+| POST | `/api/clients/{id}/employees` | Add employee to client |
+| GET | `/api/employees/{id}` | Get single employee |
+| GET | `/api/employees/{id}/vitals` | Get employee vitals |
+| GET | `/api/hospitals` | List all hospitals |
+| POST | `/api/hospitals` | Create hospital |
+| GET | `/api/hospitals/{id}` | Get single hospital |
+| PUT | `/api/hospitals/{id}` | Update hospital |
+| DELETE | `/api/hospitals/{id}` | Delete hospital + slots + appointments |
+| GET | `/api/hospitals/{id}/slots` | List all slots |
+| POST | `/api/hospitals/{id}/slots` | Create slot |
+| GET | `/api/hospitals/{id}/slots/available` | Available slots |
+| GET | `/api/hospitals/{id}/slots/available?date=YYYY-MM-DD` | Filter by date |
+| GET | `/api/appointments` | List all appointments |
+| GET | `/api/appointments/employee/{id}` | Appointments by employee |
+| GET | `/api/appointments/hospital/{id}` | Appointments by hospital |
+| PUT | `/api/appointments/{id}/cancel` | Cancel appointment |
+| GET | `/api/report-analyzer/history` | All report analysis history |
+| GET | `/api/report-analyzer/history/{id}` | Report detail |
+| GET | `/api/report-analyzer/history/{id}/parameters` | Report with individual parameter columns |
+| GET | `/api/report-analyzer/critical` | Reports with abnormal values |
+| GET | `/api/chat` | Get chat history |
+| POST | `/api/chat` | Send chat message |
+
+---
+
+### Employee (login: email + employeeCode)
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/api/stats` | Dashboard stats |
+| GET | `/api/hospitals` | Browse hospitals |
+| GET | `/api/hospitals/{id}/slots/available` | Check available slots |
+| GET | `/api/hospitals/{id}/slots/available?date=YYYY-MM-DD` | Filter by date |
+| POST | `/api/appointments` | Book appointment |
+| GET | `/api/appointments/employee/{myId}` | My appointments |
+| PUT | `/api/appointments/{id}/cancel` | Cancel my appointment |
+| GET | `/api/employees/{myId}/vitals` | My vitals |
+| POST | `/api/employees/{myId}/vitals` | Update my vitals |
+| POST | `/api/report-analyzer/analyze` | Upload and analyze PDF (form-data: file) |
+| POST | `/api/report-analyzer/debug-text` | Extract raw PDF text (form-data: file) |
+| GET | `/api/report-analyzer/history` | My past reports |
+| GET | `/api/report-analyzer/history/{id}` | Past report detail |
+| GET | `/api/report-analyzer/history/{id}/parameters` | Past report with flat parameters |
+| GET | `/api/report-analyzer/critical` | My critical reports |
+
+---
+
+### Client (login: email + password, default: `client123`)
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/api/stats` | Dashboard stats |
+| GET | `/api/clients/{myId}/employees` | My employees |
+| POST | `/api/clients/{myId}/employees` | Add employee |
+| GET | `/api/employees/{id}/vitals` | Employee vitals |
+| POST | `/api/employees/{id}/vitals` | Update employee vitals |
+| GET | `/api/appointments` | My employees' appointments |
+| POST | `/api/appointments` | Book for my employee |
+| GET | `/api/hospitals` | Browse hospitals |
+
+---
+
+### Hospital (login: email + password, default: `hospital123`)
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/api/stats` | Dashboard stats |
+| GET | `/api/hospitals/{myId}/slots` | My slots |
+| POST | `/api/hospitals/{myId}/slots` | Create slot |
+| GET | `/api/hospitals/{myId}/slots/available` | Available slots |
+| GET | `/api/appointments/hospital/{myId}` | My appointments |
+| PUT | `/api/appointments/{id}/cancel` | Cancel appointment |
+
+---
+
+### Public (no auth required)
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/` | Home page |
+| GET | `/api/stats` | Public dashboard stats |
+| POST | `/api/report-analyzer/analyze` | Analyze PDF (saves only if auth header present) |
+| POST | `/api/report-analyzer/debug-text` | Extract PDF raw text |
+| POST | `/api/employees/verify` | Verify employee credentials |
+| POST | `/api/admin/verify` | Verify admin password |
 
 ## Quick Start
 
