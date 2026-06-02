@@ -53,6 +53,11 @@ public class EmployeeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
     }
 
+    public Employee getByEmployeeCode(String employeeCode) {
+        return employeeRepository.findByEmployeeCode(employeeCode)
+                .orElseThrow(() -> new BusinessException("Employee not found with code: " + employeeCode));
+    }
+
     public Employee verifyEmployee(String email, String employeeCode) {
         return employeeRepository.findByEmailAndEmployeeCode(email, employeeCode)
                 .orElseThrow(() -> new BusinessException("Invalid email or employee code"));

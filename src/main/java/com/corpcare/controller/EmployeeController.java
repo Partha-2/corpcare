@@ -2,19 +2,20 @@ package com.corpcare.controller;
 
 import com.corpcare.config.SecurityUtil;
 import com.corpcare.dto.ApiResponse;
-import com.corpcare.dto.EmployeeRequest;
 import com.corpcare.entity.Employee;
 import com.corpcare.service.EmployeeService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
+import static com.corpcare.config.SecurityUtil.ROLE_ADMIN;
+import static com.corpcare.config.SecurityUtil.ROLE_CLIENT;
+import static com.corpcare.config.SecurityUtil.ROLE_EMPLOYEE;
+
 @RestController
+@RequestMapping("/api/employees")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -23,7 +24,7 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
-    @PostMapping("/api/employees/verify")
+    @PostMapping("/verify")
     public ResponseEntity<ApiResponse<Employee>> verifyEmployee(@RequestBody Map<String, String> body) {
         Employee employee = employeeService.verifyEmployee(
                 body.get("email"), body.get("employeeCode")
@@ -31,39 +32,21 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Login successful", employee));
     }
 
-    @PostMapping("/api/clients/{clientId}/employees")
-    public ResponseEntity<ApiResponse<Employee>> addEmployee(
-            @PathVariable Long clientId,
-            @Valid @RequestBody EmployeeRequest request) {
-        SecurityUtil.requireOwnership(clientId, "CLIENT");
-        Employee employee = employeeService.createEmployee(clientId, request);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Employee added successfully", employee));
-    }
-
-    @GetMapping("/api/clients/{clientId}/employees")
-    public ResponseEntity<ApiResponse<List<Employee>>> getEmployees(@PathVariable Long clientId) {
-        SecurityUtil.requireOwnership(clientId, "CLIENT");
-        List<Employee> employees = employeeService.getEmployeesByClient(clientId);
-        return ResponseEntity.ok(ApiResponse.success("Employees fetched successfully", employees));
-    }
-
-    @GetMapping("/api/employees/{employeeId}")
+    @GetMapping("/{employeeId}")
     public ResponseEntity<ApiResponse<Employee>> getEmployee(@PathVariable Long employeeId) {
         Employee employee = employeeService.getEmployeeById(employeeId);
-        var user = SecurityUtil.getCurrentUser();
-        if (user == null) throw new AccessDeniedException("Not authenticated");
-        if ("ADMIN".equals(user.role())) {
+        var user = SecurityUtil.requireAuthenticated();
+        String role = user.role();
+        if (ROLE_ADMIN.equals(role)) {
             return ResponseEntity.ok(ApiResponse.success("Employee fetched", employee));
         }
-        if ("CLIENT".equals(user.role())) {
+        if (ROLE_CLIENT.equals(role)) {
             if (!employee.getClient().getId().equals(user.userId())) {
                 throw new AccessDeniedException("Access denied");
             }
             return ResponseEntity.ok(ApiResponse.success("Employee fetched", employee));
         }
-        if ("EMPLOYEE".equals(user.role())) {
+        if (ROLE_EMPLOYEE.equals(role)) {
             if (!user.userId().equals(employeeId)) {
                 throw new AccessDeniedException("Access denied");
             }

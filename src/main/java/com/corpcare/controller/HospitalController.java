@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.corpcare.config.SecurityUtil.ROLE_HOSPITAL;
+
 @RestController
 @RequestMapping("/api/hospitals")
 public class HospitalController {
@@ -25,7 +27,7 @@ public class HospitalController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Hospital>> createHospital(@Valid @RequestBody HospitalRequest request) {
-        SecurityUtil.requireOwnership(0L, "ADMIN");
+        SecurityUtil.requireAdmin();
         Hospital hospital = hospitalService.createHospital(request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -34,24 +36,29 @@ public class HospitalController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Hospital>>> getAllHospitals() {
-        if (SecurityUtil.isHospital()) {
-            var user = SecurityUtil.getCurrentUser();
-            return ResponseEntity.ok(ApiResponse.success("Hospitals fetched successfully",
-                    List.of(hospitalService.getHospitalById(user.userId()))));
-        }
         return ResponseEntity.ok(ApiResponse.success("Hospitals fetched successfully", hospitalService.getAllHospitals()));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<Hospital>> getMyHospital() {
+        var user = SecurityUtil.requireAuthenticated();
+        if (!ROLE_HOSPITAL.equals(user.role())) {
+            throw new AccessDeniedException("Access denied");
+        }
+        return ResponseEntity.ok(ApiResponse.success("Hospital fetched successfully",
+                hospitalService.getHospitalById(user.userId())));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Hospital>> updateHospital(@PathVariable Long id, @Valid @RequestBody HospitalRequest request) {
-        SecurityUtil.requireOwnership(id, "HOSPITAL");
+        SecurityUtil.requireOwnership(id, ROLE_HOSPITAL);
         Hospital hospital = hospitalService.updateHospital(id, request);
         return ResponseEntity.ok(ApiResponse.success("Hospital updated successfully", hospital));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteHospital(@PathVariable Long id) {
-        SecurityUtil.requireOwnership(0L, "ADMIN");
+        SecurityUtil.requireAdmin();
         hospitalService.deleteHospital(id);
         return ResponseEntity.ok(ApiResponse.success("Hospital deleted successfully", null));
     }

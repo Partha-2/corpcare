@@ -31,10 +31,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(a -> a
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/employees/verify").permitAll()
-                .requestMatchers("/api/admin/verify").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/report-analyzer/**").permitAll()
                 .requestMatchers("/api/chat").permitAll()
                 .requestMatchers("/api/stats").permitAll()
+                .requestMatchers("/api/health/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/").permitAll()
                 .anyRequest().authenticated()

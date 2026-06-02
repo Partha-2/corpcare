@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.corpcare.config.SecurityUtil.ROLE_ADMIN;
+import static com.corpcare.config.SecurityUtil.ROLE_CLIENT;
+import static com.corpcare.config.SecurityUtil.ROLE_EMPLOYEE;
+import static com.corpcare.config.SecurityUtil.ROLE_HOSPITAL;
+
 @RestController
 @RequestMapping("/api/appointments")
 public class AppointmentController {
@@ -30,16 +35,15 @@ public class AppointmentController {
     @PostMapping
     public ResponseEntity<ApiResponse<Appointment>> bookAppointment(
             @Valid @RequestBody AppointmentRequest request) {
-        var user = SecurityUtil.getCurrentUser();
-        if (user == null) throw new AccessDeniedException("Not authenticated");
-        if ("HOSPITAL".equals(user.role())) throw new AccessDeniedException("Access denied");
-        if ("CLIENT".equals(user.role())) {
+        var user = SecurityUtil.requireAuthenticated();
+        if (ROLE_HOSPITAL.equals(user.role())) throw new AccessDeniedException("Access denied");
+        if (ROLE_CLIENT.equals(user.role())) {
             Employee emp = employeeService.getEmployeeById(request.getEmployeeId());
             if (!emp.getClient().getId().equals(user.userId())) {
                 throw new AccessDeniedException("Access denied");
             }
         }
-        if ("EMPLOYEE".equals(user.role())) {
+        if (ROLE_EMPLOYEE.equals(user.role())) {
             if (!user.userId().equals(request.getEmployeeId())) {
                 throw new AccessDeniedException("Access denied");
             }
@@ -52,37 +56,44 @@ public class AppointmentController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Appointment>>> getAllAppointments() {
-        var user = SecurityUtil.getCurrentUser();
-        if (user == null) throw new AccessDeniedException("Not authenticated");
+        return ResponseEntity.ok(ApiResponse.success("Appointments fetched", appointmentService.getAllAppointments()));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<List<Appointment>>> getMyAppointments() {
+        var user = SecurityUtil.requireAuthenticated();
+        String role = user.role();
         List<Appointment> appointments;
-        if ("ADMIN".equals(user.role())) {
+        if (ROLE_ADMIN.equals(role)) {
             appointments = appointmentService.getAllAppointments();
-        } else if ("CLIENT".equals(user.role())) {
+        } else if (ROLE_CLIENT.equals(role)) {
             appointments = appointmentService.getAppointmentsByClient(user.userId());
-        } else if ("HOSPITAL".equals(user.role())) {
+        } else if (ROLE_HOSPITAL.equals(role)) {
             appointments = appointmentService.getAppointmentsByHospital(user.userId());
-        } else if ("EMPLOYEE".equals(user.role())) {
+        } else if (ROLE_EMPLOYEE.equals(role)) {
             appointments = appointmentService.getAppointmentsByEmployee(user.userId());
         } else {
             throw new AccessDeniedException("Access denied");
         }
-        return ResponseEntity.ok(ApiResponse.success("Appointments fetched", appointments));
+        return ResponseEntity.ok(ApiResponse.success("My appointments fetched", appointments));
     }
 
     @GetMapping("/employee/{employeeId}")
     public ResponseEntity<ApiResponse<List<Appointment>>> getEmployeeAppointments(
             @PathVariable Long employeeId) {
-        var user = SecurityUtil.getCurrentUser();
-        if (user == null) throw new AccessDeniedException("Not authenticated");
-        if ("ADMIN".equals(user.role())) {
-            // ok
-        } else if ("EMPLOYEE".equals(user.role())) {
-            if (!user.userId().equals(employeeId)) throw new AccessDeniedException("Access denied");
-        } else if ("CLIENT".equals(user.role())) {
-            Employee emp = employeeService.getEmployeeById(employeeId);
-            if (!emp.getClient().getId().equals(user.userId())) throw new AccessDeniedException("Access denied");
-        } else {
-            throw new AccessDeniedException("Access denied");
+        var user = SecurityUtil.requireAuthenticated();
+        String role = user.role();
+        if (!ROLE_ADMIN.equals(role)) {
+            if (ROLE_EMPLOYEE.equals(role) && !user.userId().equals(employeeId)) {
+                throw new AccessDeniedException("Access denied");
+            }
+            if (ROLE_CLIENT.equals(role)) {
+                Employee emp = employeeService.getEmployeeById(employeeId);
+                if (!emp.getClient().getId().equals(user.userId())) throw new AccessDeniedException("Access denied");
+            }
+            if (!ROLE_EMPLOYEE.equals(role) && !ROLE_CLIENT.equals(role)) {
+                throw new AccessDeniedException("Access denied");
+            }
         }
         List<Appointment> appointments = appointmentService.getAppointmentsByEmployee(employeeId);
         return ResponseEntity.ok(ApiResponse.success("Appointments fetched", appointments));
@@ -91,14 +102,12 @@ public class AppointmentController {
     @GetMapping("/hospital/{hospitalId}")
     public ResponseEntity<ApiResponse<List<Appointment>>> getHospitalAppointments(
             @PathVariable Long hospitalId) {
-        var user = SecurityUtil.getCurrentUser();
-        if (user == null) throw new AccessDeniedException("Not authenticated");
-        if ("ADMIN".equals(user.role())) {
-            // ok
-        } else if ("HOSPITAL".equals(user.role())) {
-            if (!user.userId().equals(hospitalId)) throw new AccessDeniedException("Access denied");
-        } else {
-            throw new AccessDeniedException("Access denied");
+        var user = SecurityUtil.requireAuthenticated();
+        String role = user.role();
+        if (!ROLE_ADMIN.equals(role)) {
+            if (!ROLE_HOSPITAL.equals(role) || !user.userId().equals(hospitalId)) {
+                throw new AccessDeniedException("Access denied");
+            }
         }
         List<Appointment> appointments = appointmentService.getAppointmentsByHospital(hospitalId);
         return ResponseEntity.ok(ApiResponse.success("Hospital appointments fetched", appointments));
@@ -107,24 +116,13 @@ public class AppointmentController {
     @PutMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<Void>> cancelAppointment(@PathVariable Long id) {
         Appointment appointment = appointmentService.getAppointmentById(id);
-        var user = SecurityUtil.getCurrentUser();
-        if (user == null) throw new AccessDeniedException("Not authenticated");
-        if ("ADMIN".equals(user.role())) {
-            // ok
-        } else if ("EMPLOYEE".equals(user.role())) {
-            if (!user.userId().equals(appointment.getEmployee().getId())) {
-                throw new AccessDeniedException("Access denied");
-            }
-        } else if ("HOSPITAL".equals(user.role())) {
-            if (!user.userId().equals(appointment.getSlot().getHospital().getId())) {
-                throw new AccessDeniedException("Access denied");
-            }
-        } else if ("CLIENT".equals(user.role())) {
-            if (!user.userId().equals(appointment.getEmployee().getClient().getId())) {
-                throw new AccessDeniedException("Access denied");
-            }
-        } else {
-            throw new AccessDeniedException("Access denied");
+        var user = SecurityUtil.requireAuthenticated();
+        String role = user.role();
+        if (!ROLE_ADMIN.equals(role)) {
+            boolean authorized = (ROLE_EMPLOYEE.equals(role) && user.userId().equals(appointment.getEmployee().getId()))
+                    || (ROLE_HOSPITAL.equals(role) && user.userId().equals(appointment.getSlot().getHospital().getId()))
+                    || (ROLE_CLIENT.equals(role) && user.userId().equals(appointment.getEmployee().getClient().getId()));
+            if (!authorized) throw new AccessDeniedException("Access denied");
         }
         appointmentService.cancelAppointment(id);
         return ResponseEntity.ok(ApiResponse.success("Appointment cancelled successfully", null));

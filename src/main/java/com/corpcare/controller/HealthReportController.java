@@ -2,12 +2,16 @@ package com.corpcare.controller;
 
 import com.corpcare.dto.ApiResponse;
 import com.corpcare.dto.HealthAnalysisReport;
-import com.corpcare.service.HealthRecommendationService;
+import com.corpcare.entity.Employee;
+import com.corpcare.entity.ReportDetail;
+import com.corpcare.repository.ReportDetailRepository;
+import com.corpcare.service.EmployeeService;
 import com.corpcare.service.PdfExtractionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -15,12 +19,15 @@ import java.util.Map;
 public class HealthReportController {
 
     private final PdfExtractionService pdfExtractionService;
-    private final HealthRecommendationService recommendationService;
+    private final EmployeeService employeeService;
+    private final ReportDetailRepository reportDetailRepository;
 
     public HealthReportController(PdfExtractionService pdfExtractionService,
-                                   HealthRecommendationService recommendationService) {
+                                   EmployeeService employeeService,
+                                   ReportDetailRepository reportDetailRepository) {
         this.pdfExtractionService = pdfExtractionService;
-        this.recommendationService = recommendationService;
+        this.employeeService = employeeService;
+        this.reportDetailRepository = reportDetailRepository;
     }
 
     @PostMapping("/analyze")
@@ -41,15 +48,12 @@ public class HealthReportController {
         }
     }
 
-    @GetMapping("/report/{employeeId}")
-    public ResponseEntity<ApiResponse<String>> getReport(@PathVariable String employeeId,
-                                                          @RequestParam("name") String name,
-                                                          @RequestParam("age") String age,
-                                                          @RequestParam("sex") String sex,
-                                                          @RequestParam("bloodGroup") String bloodGroup,
-                                                          @RequestParam("vendor") String vendor) {
-        String reportText = recommendationService.generateReportText(
-            vendor, name, age, sex, bloodGroup, java.util.Collections.emptyList());
-        return ResponseEntity.ok(ApiResponse.success("Report generated", reportText));
+    @GetMapping("/report/{employeeCode}")
+    public ResponseEntity<ApiResponse<List<ReportDetail>>> getReportByEmployeeCode(
+            @PathVariable String employeeCode) {
+        Employee employee = employeeService.getByEmployeeCode(employeeCode);
+        List<ReportDetail> reports = reportDetailRepository
+                .findByEmployeeIdOrderByCreatedAtDesc(employee.getId());
+        return ResponseEntity.ok(ApiResponse.success("Health report fetched", reports));
     }
 }

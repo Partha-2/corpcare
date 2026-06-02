@@ -1,6 +1,7 @@
 package com.corpcare.controller;
 
 import com.corpcare.config.JwtUtil;
+import com.corpcare.config.SecurityUtil;
 import com.corpcare.dto.ApiResponse;
 import com.corpcare.entity.Client;
 import com.corpcare.entity.Employee;
@@ -40,7 +41,7 @@ public class AuthController {
         if (!adminPassword.equals(body.get("password"))) {
             return ResponseEntity.status(401).body(ApiResponse.error("Invalid password"));
         }
-        String token = jwtUtil.generateToken("admin", "ADMIN", "Admin", 0L);
+        String token = jwtUtil.generateToken("admin", SecurityUtil.ROLE_ADMIN, "Admin", 0L);
         return ResponseEntity.ok(ApiResponse.success("Login successful", Map.of("token", token, "name", "Admin")));
     }
 
@@ -51,7 +52,7 @@ public class AuthController {
         Employee emp = employeeRepository.findByEmailAndEmployeeCode(email, code)
                 .orElseThrow(() -> new BusinessException("Invalid email or employee code"));
 
-        String token = jwtUtil.generateToken(emp.getEmail(), "EMPLOYEE", emp.getFullName(), emp.getId());
+        String token = jwtUtil.generateToken(emp.getEmail(), SecurityUtil.ROLE_EMPLOYEE, emp.getFullName(), emp.getId());
         return ResponseEntity.ok(ApiResponse.success("Login successful", Map.of(
                 "token", token, "employee", emp
         )));
@@ -69,7 +70,7 @@ public class AuthController {
         if (!stored.equals(password)) {
             return ResponseEntity.status(401).body(ApiResponse.error("Invalid password"));
         }
-        String token = jwtUtil.generateToken(client.getContactEmail(), "CLIENT", client.getCompanyName(), client.getId());
+        String token = jwtUtil.generateToken(client.getContactEmail(), SecurityUtil.ROLE_CLIENT, client.getCompanyName(), client.getId());
         return ResponseEntity.ok(ApiResponse.success("Login successful", Map.of(
                 "token", token, "client", client
         )));
@@ -87,7 +88,7 @@ public class AuthController {
         if (!stored.equals(password)) {
             return ResponseEntity.status(401).body(ApiResponse.error("Invalid password"));
         }
-        String token = jwtUtil.generateToken(hospital.getContactEmail(), "HOSPITAL", hospital.getHospitalName(), hospital.getId());
+        String token = jwtUtil.generateToken(hospital.getContactEmail(), SecurityUtil.ROLE_HOSPITAL, hospital.getHospitalName(), hospital.getId());
         return ResponseEntity.ok(ApiResponse.success("Login successful", Map.of(
                 "token", token, "hospital", hospital
         )));

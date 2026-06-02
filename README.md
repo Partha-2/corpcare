@@ -6,7 +6,6 @@ Corporate clients register employees, hospitals offer slots, employees book appo
 ## Demo
 
 - **Frontend:** https://corpcare-afxw.vercel.app
-- **Backend:** https://corpcare.onrender.com
 - **Admin Login:** Password `admin123` (configurable via `ADMIN_PASSWORD` env var)
 
 ## Tech Stack
@@ -20,7 +19,6 @@ Corporate clients register employees, hospitals offer slots, employees book appo
 | **AI Chat** | Groq (Llama 3.3 70B) via backend proxy at `/api/chat` |
 | **Auth** | Admin: password gate; Employee: email + employeeCode verification |
 | **Build** | Maven (BE), Vite (FE) |
-| **Deployment** | Render (BE Docker) + Vercel (FE static) — auto-deploy on git push |
 | **Dark Mode** | CSS variables + localStorage toggle |
 
 ## Four Portal Architecture
@@ -85,8 +83,7 @@ Both notifications are **asynchronous** — the booking response is immediate, n
 
 ## API Reference
 
-**Base URL (local):** `http://localhost:8080`  
-**Base URL (live):** `https://corpcare.onrender.com`
+**Base URL:** `http://localhost:8080`
 
 All authenticated endpoints require header: `Authorization: Bearer {token}`
 
@@ -110,22 +107,20 @@ All authenticated endpoints require header: `Authorization: Bearer {token}`
 | GET | `/api/stats` | Dashboard statistics |
 | GET | `/api/clients` | List all clients |
 | POST | `/api/clients` | Create client |
-| GET | `/api/clients/{id}` | Get single client |
 | PUT | `/api/clients/{id}` | Update client |
 | DELETE | `/api/clients/{id}` | Delete client + employees + vitals |
-| GET | `/api/clients/{id}/employees` | List employees under client |
-| POST | `/api/clients/{id}/employees` | Add employee to client |
-| GET | `/api/employees/{id}` | Get single employee |
-| GET | `/api/employees/{id}/vitals` | Get employee vitals |
+| GET | `/api/clients/{clientId}/employees` | List employees under client |
+| POST | `/api/clients/{clientId}/employees` | Add employee to client |
+| GET | `/api/employees/{employeeId}` | Get single employee |
+| GET | `/api/employees/{employeeId}/vitals` | Get employee vitals |
 | GET | `/api/hospitals` | List all hospitals |
 | POST | `/api/hospitals` | Create hospital |
-| GET | `/api/hospitals/{id}` | Get single hospital |
 | PUT | `/api/hospitals/{id}` | Update hospital |
 | DELETE | `/api/hospitals/{id}` | Delete hospital + slots + appointments |
-| GET | `/api/hospitals/{id}/slots` | List all slots |
-| POST | `/api/hospitals/{id}/slots` | Create slot |
-| GET | `/api/hospitals/{id}/slots/available` | Available slots |
-| GET | `/api/hospitals/{id}/slots/available?date=YYYY-MM-DD` | Filter by date |
+| GET | `/api/hospitals/{hospitalId}/slots` | List all slots |
+| POST | `/api/hospitals/{hospitalId}/slots` | Create slot |
+| GET | `/api/hospitals/{hospitalId}/slots/available` | Available slots |
+| GET | `/api/hospitals/{hospitalId}/slots/available?date=YYYY-MM-DD` | Filter by date |
 | GET | `/api/appointments` | List all appointments |
 | GET | `/api/appointments/employee/{id}` | Appointments by employee |
 | GET | `/api/appointments/hospital/{id}` | Appointments by hospital |
@@ -134,7 +129,7 @@ All authenticated endpoints require header: `Authorization: Bearer {token}`
 | GET | `/api/report-analyzer/history/{id}` | Report detail |
 | GET | `/api/report-analyzer/history/{id}/parameters` | Report with individual parameter columns |
 | GET | `/api/report-analyzer/critical` | Reports with abnormal values |
-| GET | `/api/chat` | Get chat history |
+| GET | `/api/chat` | Get chat status |
 | POST | `/api/chat` | Send chat message |
 
 ---
@@ -195,10 +190,11 @@ All authenticated endpoints require header: `Authorization: Bearer {token}`
 |--------|-----|-------------|
 | GET | `/` | Home page |
 | GET | `/api/stats` | Public dashboard stats |
+| POST | `/api/health/analyze` | Analyze PDF (multipart `file`) |
+| GET | `/api/health/report/{employeeCode}` | Get health report by employee code (e.g. `EMP001`) |
 | POST | `/api/report-analyzer/analyze` | Analyze PDF (saves only if auth header present) |
 | POST | `/api/report-analyzer/debug-text` | Extract PDF raw text |
 | POST | `/api/employees/verify` | Verify employee credentials |
-| POST | `/api/admin/verify` | Verify admin password |
 
 ## Quick Start
 
@@ -226,23 +222,6 @@ npm run dev
 
 The database (H2 file mode) is auto-created and seeded with sample data on first run.  
 No MySQL setup needed for development — just run.
-
-### Production (Render + Vercel — free)
-
-```bash
-# Backend → https://render.com (Docker web service)
-# Frontend → https://vercel.com (static site from corpcare-ui/)
-```
-
-Set these env vars on Render for notifications:
-
-| Variable | Required | Default |
-|----------|----------|---------|
-| `TWILIO_ACCOUNT_SID` | For WhatsApp | — |
-| `TWILIO_AUTH_TOKEN` | For WhatsApp | — |
-| `BOLNA_API_KEY` | For voice calls | — |
-| `GROQ_API_KEY` | For chatbot | — |
-| `ADMIN_PASSWORD` | No | `admin123` |
 
 ## Default Test Data
 
@@ -285,22 +264,11 @@ corpcare-ui/                    # React frontend
 └── vercel.json
 ```
 
-## Auto-Deploy
-
-Push to `main` automatically deploys both:
-
-| Platform | Service | Trigger |
-|----------|---------|---------|
-| **Render** | Backend (Docker) | Any push to `main` |
-| **Vercel** | Frontend (static) | Any push to `main` |
-
 ## System Design
 
 Detailed architecture documentation is available in the [docs/system-design](docs/system-design/) directory:
 
 | Document | Description |
 |----------|-------------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | High-level system architecture with diagrams |
 | [data-model.md](docs/system-design/data-model.md) | Entity Relationship Diagram and schema |
 | [api-flow.md](docs/system-design/api-flow.md) | API sequence diagrams and complete reference |
-| [deployment.md](docs/system-design/deployment.md) | Docker, CI/CD, and production deployment guide |

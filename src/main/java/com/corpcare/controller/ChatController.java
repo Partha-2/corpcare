@@ -27,6 +27,7 @@ public class ChatController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> status() {
+
         String keyPreview = groqApiKey != null && groqApiKey.startsWith("gsk_")
             ? groqApiKey.substring(0, 10) + "..."
             : "not set";
@@ -86,6 +87,7 @@ public class ChatController {
             );
 
             Map bodyResp = response.getBody();
+
             List choices = (List) bodyResp.get("choices");
             if (choices != null && !choices.isEmpty()) {
                 Map first = (Map) choices.get(0);

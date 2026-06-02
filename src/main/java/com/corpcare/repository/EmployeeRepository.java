@@ -8,4 +8,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Employee> findByClientId(Long clientId);
     long countByClientId(Long clientId);
     java.util.Optional<Employee> findByEmailAndEmployeeCode(String email, String employeeCode);
+    java.util.Optional<Employee> findByEmployeeCode(String employeeCode);
 }

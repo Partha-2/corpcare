@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+import static com.corpcare.config.SecurityUtil.ROLE_HOSPITAL;
+
 @RestController
 @RequestMapping("/api/hospitals/{hospitalId}/slots")
 public class AppointmentSlotController {
@@ -27,7 +29,7 @@ public class AppointmentSlotController {
     public ResponseEntity<ApiResponse<AppointmentSlot>> createSlot(
             @PathVariable Long hospitalId,
             @Valid @RequestBody SlotRequest request) {
-        SecurityUtil.requireOwnership(hospitalId, "HOSPITAL");
+        SecurityUtil.requireOwnership(hospitalId, ROLE_HOSPITAL);
         AppointmentSlot slot = slotService.createSlot(hospitalId, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -46,7 +48,7 @@ public class AppointmentSlotController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<AppointmentSlot>>> getAllSlots(
             @PathVariable Long hospitalId) {
-        SecurityUtil.requireOwnership(hospitalId, "HOSPITAL");
+        SecurityUtil.requireOwnership(hospitalId, ROLE_HOSPITAL);
         List<AppointmentSlot> slots = slotService.getAllSlotsByHospital(hospitalId);
         return ResponseEntity.ok(ApiResponse.success("Slots fetched successfully", slots));
     }

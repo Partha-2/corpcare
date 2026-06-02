@@ -13,6 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
+import static com.corpcare.config.SecurityUtil.ROLE_ADMIN;
+import static com.corpcare.config.SecurityUtil.ROLE_CLIENT;
+import static com.corpcare.config.SecurityUtil.ROLE_EMPLOYEE;
+
 @RestController
 @RequestMapping("/api/employees/{employeeId}/vitals")
 public class EmployeeVitalsController {
@@ -44,14 +48,14 @@ public class EmployeeVitalsController {
     }
 
     private void verifyAccess(Long employeeId) {
-        var user = SecurityUtil.getCurrentUser();
-        if (user == null) throw new AccessDeniedException("Not authenticated");
-        if ("ADMIN".equals(user.role())) return;
-        if ("EMPLOYEE".equals(user.role())) {
+        var user = SecurityUtil.requireAuthenticated();
+        String role = user.role();
+        if (ROLE_ADMIN.equals(role)) return;
+        if (ROLE_EMPLOYEE.equals(role)) {
             if (!user.userId().equals(employeeId)) throw new AccessDeniedException("Access denied");
             return;
         }
-        if ("CLIENT".equals(user.role())) {
+        if (ROLE_CLIENT.equals(role)) {
             Employee emp = employeeService.getEmployeeById(employeeId);
             if (!emp.getClient().getId().equals(user.userId())) throw new AccessDeniedException("Access denied");
             return;
