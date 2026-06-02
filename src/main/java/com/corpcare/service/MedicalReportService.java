@@ -48,10 +48,13 @@ public class MedicalReportService {
         return medicalReportRepository.findByEmployeeId(employeeId);
     }
 
-    public byte[] downloadReport(Long reportId, Long employeeId) {
-        MedicalReport report = medicalReportRepository.findByIdAndEmployeeId(reportId, employeeId)
+    public MedicalReport getReport(Long reportId, Long employeeId) {
+        return medicalReportRepository.findByIdAndEmployeeId(reportId, employeeId)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
-        return report.getPdfData();
+    }
+
+    public byte[] downloadReport(Long reportId, Long employeeId) {
+        return getReport(reportId, employeeId).getPdfData();
     }
 
     public void deleteReport(Long reportId) {

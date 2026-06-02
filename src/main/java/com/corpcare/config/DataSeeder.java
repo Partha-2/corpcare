@@ -35,7 +35,25 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         fixEmptyPasswords();
 
-        if (employeeRepository.count() > 0) return;
+        if (employeeRepository.count() > 0) {
+            var existing = employeeRepository.findByEmployeeCode("EMP001");
+            if (existing.isEmpty()) {
+                Client c = clientRepository.findByContactEmail("hr@vkohli.fit")
+                        .orElseGet(() -> clientRepository.save(
+                                new Client("Virat Kohli Fitness Pvt Ltd", "hr@vkohli.fit", "+919900001111", 100)
+                        ));
+                Employee emp = employeeRepository.save(new Employee("EMP001", "Parthasarathy", "mparthasarathy0000@gmail.com", "+919876543212", c));
+                if (vitalsRepository.findByEmployeeId(emp.getId()).isEmpty()) {
+                    vitalsRepository.save(new EmployeeVitals(emp, 170.0, 70.0, "122/82", 90.0, BloodGroup.A_POSITIVE));
+                }
+            } else {
+                Employee emp = existing.get();
+                emp.setEmail("mparthasarathy0000@gmail.com");
+                emp.setFullName("Parthasarathy");
+                employeeRepository.save(emp);
+            }
+            return;
+        }
 
         Client client = clientRepository.findByContactEmail("hr@vkohli.fit")
                 .orElseGet(() -> clientRepository.save(
@@ -44,11 +62,13 @@ public class DataSeeder implements CommandLineRunner {
 
         List<Employee> employees = employeeRepository.saveAll(List.of(
                 new Employee("VK001", "Rohit Sharma", "rohit@vkohli.fit", "+919876543210", client),
-                new Employee("VK002", "Rahul Dravid", "rahul@vkohli.fit", "+919876543211", client)
+                new Employee("VK002", "Rahul Dravid", "rahul@vkohli.fit", "+919876543211", client),
+                new Employee("EMP001", "Parthasarathy", "mparthasarathy0000@gmail.com", "+919876543212", client)
         ));
 
         vitalsRepository.save(new EmployeeVitals(employees.get(0), 175.0, 72.0, "120/80", 95.0, BloodGroup.O_POSITIVE));
         vitalsRepository.save(new EmployeeVitals(employees.get(1), 168.0, 68.0, "118/76", 88.0, BloodGroup.B_POSITIVE));
+        vitalsRepository.save(new EmployeeVitals(employees.get(2), 170.0, 70.0, "122/82", 90.0, BloodGroup.A_POSITIVE));
 
         Hospital hospital = hospitalRepository.save(
                 new Hospital("Apollo Bengaluru", "Bengaluru", "contact@apollo.in")

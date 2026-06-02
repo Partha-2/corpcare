@@ -52,11 +52,23 @@ public class MedicalReportController {
             @PathVariable Long reportId,
             @PathVariable Long employeeId) {
 
-        byte[] pdfData = medicalReportService.downloadReport(reportId, employeeId);
+        MedicalReport report = medicalReportService.getReport(reportId, employeeId);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report.pdf\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + report.getReportType() + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
-                .body(pdfData);
+                .body(report.getPdfData());
+    }
+
+    @GetMapping("/view/{reportId}/employee/{employeeId}")
+    public ResponseEntity<byte[]> viewReport(
+            @PathVariable Long reportId,
+            @PathVariable Long employeeId) {
+
+        MedicalReport report = medicalReportService.getReport(reportId, employeeId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + report.getReportType() + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(report.getPdfData());
     }
 
     @DeleteMapping("/{reportId}")

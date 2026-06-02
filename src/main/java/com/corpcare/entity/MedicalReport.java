@@ -21,8 +21,7 @@ public class MedicalReport {
 
     private String originalFileName;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "bytea")
     private byte[] pdfData;
 
     @CreationTimestamp

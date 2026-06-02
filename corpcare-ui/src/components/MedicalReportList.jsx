@@ -22,6 +22,15 @@ export default function MedicalReportList({ employeeId, refreshKey }) {
 
   useEffect(() => { fetchReports() }, [employeeId, refreshKey])
 
+  const handleView = (report) => {
+    api.get(`/medical-reports/view/${report.id}/employee/${employeeId}`, {
+      responseType: 'blob'
+    }).then(r => {
+      const url = URL.createObjectURL(r.data)
+      window.open(url, '_blank')
+    }).catch(() => {})
+  }
+
   const handleDownload = (report) => {
     api.get(`/medical-reports/download/${report.id}/employee/${employeeId}`, {
       responseType: 'blob'
@@ -67,8 +76,11 @@ export default function MedicalReportList({ employeeId, refreshKey }) {
               Uploaded {formatDate(report.uploadedAt)} by {report.uploadedBy}
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button className="btn" style={{ fontSize: 13, padding: '4px 12px' }} onClick={() => handleView(report)}>
+                View PDF
+              </button>
               <button className="btn" style={{ fontSize: 13, padding: '4px 12px' }} onClick={() => handleDownload(report)}>
-                Download PDF
+                Download
               </button>
               <button className="btn" style={{ fontSize: 13, padding: '4px 12px', background: '#ef4444', color: '#fff', border: 'none' }} onClick={() => handleDelete(report.id)}>
                 Delete
