@@ -8,6 +8,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -34,21 +35,20 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         fixEmptyPasswords();
 
-        if (clientRepository.count() > 0) return;
+        if (employeeRepository.count() > 0) return;
 
-        Client client = clientRepository.save(
-                new Client("Virat Kohli Fitness Pvt Ltd", "hr@vkohli.fit", "+919900001111", 100)
-        );
+        Client client = clientRepository.findByContactEmail("hr@vkohli.fit")
+                .orElseGet(() -> clientRepository.save(
+                        new Client("Virat Kohli Fitness Pvt Ltd", "hr@vkohli.fit", "+919900001111", 100)
+                ));
 
-        Employee emp1 = employeeRepository.save(
-                new Employee("VK001", "Rohit Sharma", "rohit@vkohli.fit", "+919876543210", client)
-        );
-        Employee emp2 = employeeRepository.save(
+        List<Employee> employees = employeeRepository.saveAll(List.of(
+                new Employee("VK001", "Rohit Sharma", "rohit@vkohli.fit", "+919876543210", client),
                 new Employee("VK002", "Rahul Dravid", "rahul@vkohli.fit", "+919876543211", client)
-        );
+        ));
 
-        vitalsRepository.save(new EmployeeVitals(emp1, 175.0, 72.0, "120/80", 95.0, BloodGroup.O_POSITIVE));
-        vitalsRepository.save(new EmployeeVitals(emp2, 168.0, 68.0, "118/76", 88.0, BloodGroup.B_POSITIVE));
+        vitalsRepository.save(new EmployeeVitals(employees.get(0), 175.0, 72.0, "120/80", 95.0, BloodGroup.O_POSITIVE));
+        vitalsRepository.save(new EmployeeVitals(employees.get(1), 168.0, 68.0, "118/76", 88.0, BloodGroup.B_POSITIVE));
 
         Hospital hospital = hospitalRepository.save(
                 new Hospital("Apollo Bengaluru", "Bengaluru", "contact@apollo.in")

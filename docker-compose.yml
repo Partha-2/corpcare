@@ -5,31 +5,8 @@
 
 services:
 
-  # ---- Database (PostgreSQL) ----
-  db:
-    image: postgres:16-alpine
-    container_name: corpcare-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: corpcare
-      POSTGRES_USER: corpcare
-      POSTGRES_PASSWORD: corpcare
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U corpcare -d corpcare"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   # ---- Backend (Spring Boot API) ----
   backend:
-    depends_on:
-      db:
-        condition: service_healthy
     build:
       context: .
       dockerfile: Dockerfile
@@ -39,9 +16,9 @@ services:
     restart: unless-stopped
 
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/corpcare
-      SPRING_DATASOURCE_USERNAME: corpcare
-      SPRING_DATASOURCE_PASSWORD: corpcare
+      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: tFNhluqGVUpuNLKA
       GROQ_API_KEY: ${GROQ_API_KEY}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
@@ -66,6 +43,3 @@ services:
 
     ports:
       - "3000:80"
-
-volumes:
-  pgdata:
