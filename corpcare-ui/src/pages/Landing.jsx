@@ -22,6 +22,7 @@ const portals = [
   { to: '/hospital/login', icon: '🏥', title: 'Hospital Portal', desc: 'Partner hospitals. Manage appointment slots and view bookings in real-time.', bg: '#ecfdf5', color: '#059669', top: '#059669' },
   { to: '/employee/login', icon: '👤', title: 'Employee Portal', desc: 'Sign in with your email + code to book appointments and manage your health.', bg: '#fef3c7', color: '#92400e', top: '#d97706' },
   { to: '/smart-split', icon: '📄', title: 'Smart PDF Split', desc: 'Upload multi-page medical PDFs. Auto-detect and split into lab, eye, and chest reports using AI.', bg: '#fce7f3', color: '#be185d', top: '#be185d' },
+  { to: '/analyze', icon: '🔬', title: 'Medical Analyzer', desc: 'Upload medical reports. Extract values, compare with reference ranges, and highlight HIGH / LOW / NORMAL results.', bg: '#f0fdf4', color: '#16a34a', top: '#22c55e' },
 ]
 
 const testimonials = [

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
 import SmartSplit from './pages/SmartSplit'
+import MedicalAnalyzer from './pages/MedicalAnalyzer'
 import AdminNav from './components/AdminNavbar'
 import ClientNav from './components/ClientNavbar'
 import HospitalNav from './components/HospitalNavbar'
@@ -51,6 +52,7 @@ export default function App() {
       <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/smart-split" element={<SmartSplit />} />
+      <Route path="/analyze" element={<MedicalAnalyzer />} />
 
       {/* Admin Login */}
       <Route path="/admin/login" element={<AdminLogin />} />
