@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
+import SmartSplit from './pages/SmartSplit'
 import AdminNav from './components/AdminNavbar'
 import ClientNav from './components/ClientNavbar'
 import HospitalNav from './components/HospitalNavbar'
@@ -49,6 +50,7 @@ export default function App() {
       <ErrorBoundary>
       <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/smart-split" element={<SmartSplit />} />
 
       {/* Admin Login */}
       <Route path="/admin/login" element={<AdminLogin />} />

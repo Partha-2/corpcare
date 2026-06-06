@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 import Loading from '../../components/Loading'
-import MedicalReportUpload from '../../components/MedicalReportUpload'
-import MedicalReportList from '../../components/MedicalReportList'
 
 const SHIFTS = { MORNING_8_TO_4: '8AM-4PM', EVENING_4_TO_12: '4PM-12AM', NIGHT_12_TO_8: '12AM-8AM' }
 
@@ -13,7 +11,6 @@ export default function EmployeeDashboard() {
   const [vitals, setVitals] = useState(null)
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (!employee.id) { navigate('/employee/login'); return }
@@ -137,11 +134,6 @@ export default function EmployeeDashboard() {
         </div>
       )}
 
-      <div style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Medical Reports</h2>
-        <MedicalReportUpload employeeId={employee.id} onUploadSuccess={() => setRefreshKey(k => k + 1)} />
-        <MedicalReportList employeeId={employee.id} refreshKey={refreshKey} />
-      </div>
     </div>
   )
 }

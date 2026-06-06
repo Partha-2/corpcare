@@ -21,6 +21,7 @@ const portals = [
   { to: '/client/login', icon: '🏢', title: 'Client Portal', desc: 'Corporate companies. Manage employees, record vitals, and book appointments.', bg: '#eff6ff', color: '#2563eb', top: '#2563eb' },
   { to: '/hospital/login', icon: '🏥', title: 'Hospital Portal', desc: 'Partner hospitals. Manage appointment slots and view bookings in real-time.', bg: '#ecfdf5', color: '#059669', top: '#059669' },
   { to: '/employee/login', icon: '👤', title: 'Employee Portal', desc: 'Sign in with your email + code to book appointments and manage your health.', bg: '#fef3c7', color: '#92400e', top: '#d97706' },
+  { to: '/smart-split', icon: '📄', title: 'Smart PDF Split', desc: 'Upload multi-page medical PDFs. Auto-detect and split into lab, eye, and chest reports using AI.', bg: '#fce7f3', color: '#be185d', top: '#be185d' },
 ]
 
 const testimonials = [
