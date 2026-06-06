@@ -61,6 +61,7 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <Link to="/admin/clients" className="btn">➕ New Client</Link>
           <Link to="/admin/hospitals" className="btn btn-green">🏥 New Hospital</Link>
+          <Link to="/admin/analyzers" className="btn" style={{ background: '#16a34a', color: '#fff' }}>🔬 Analyze Reports</Link>
           <Link to="/admin/clients" className="btn btn-ghost">📋 All Clients</Link>
           <Link to="/admin/hospitals" className="btn btn-ghost">📋 All Hospitals</Link>
         </div>

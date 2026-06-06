@@ -17,6 +17,7 @@ export default function AdminNavbar() {
       <Link to="/admin" className={isActive('/admin')}>Dashboard</Link>
       <Link to="/admin/clients" className={isActive('/admin/clients')}>Clients</Link>
       <Link to="/admin/hospitals" className={isActive('/admin/hospitals')}>Hospitals</Link>
+      <Link to="/admin/analyzers" className={isActive('/admin/analyzers')}>Analyzers</Link>
       <div style={{ flex: 1 }} />
       <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.15)', color: 'white' }} onClick={handleLogout}>Logout</button>
     </nav>

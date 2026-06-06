@@ -24,6 +24,7 @@ import HospitalLogin from './pages/hospital/Login'
 import HospitalDashboard from './pages/hospital/Dashboard'
 import HospitalSlots from './pages/hospital/Slots'
 import HospitalAppointments from './pages/hospital/Appointments'
+import AdminAnalyzer from './pages/admin/AdminAnalyzer'
 import EmployeeLogin from './pages/employee/Login'
 import EmployeeDashboard from './pages/employee/Dashboard'
 import EmployeeVitals from './pages/employee/Vitals'
@@ -61,6 +62,7 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute portal="admin"><Layout nav={AdminNav}><AdminDashboard /></Layout></ProtectedRoute>} />
       <Route path="/admin/clients" element={<ProtectedRoute portal="admin"><Layout nav={AdminNav}><AdminClients /></Layout></ProtectedRoute>} />
       <Route path="/admin/hospitals" element={<ProtectedRoute portal="admin"><Layout nav={AdminNav}><AdminHospitals /></Layout></ProtectedRoute>} />
+      <Route path="/admin/analyzers" element={<ProtectedRoute portal="admin"><Layout nav={AdminNav}><AdminAnalyzer /></Layout></ProtectedRoute>} />
 
       {/* Client Login */}
       <Route path="/client/login" element={<ClientLogin />} />
