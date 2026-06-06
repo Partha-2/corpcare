@@ -6,14 +6,12 @@ import com.corpcare.pdfsplit.model.response.ApiResponse;
 import com.corpcare.pdfsplit.service.pdf.PdfValidatorService;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -150,13 +148,13 @@ public class PatientController {
             @PathVariable String patientId,
             @PathVariable String reportId) {
         if (invalidId(patientId)) return bad("Invalid Patient ID format");
-        File f = patientService.getReportPdf(patientId, reportId);
-        if (f == null) return notFound("PDF not found: " + reportId);
+        byte[] data = patientService.getReportPdf(patientId, reportId);
+        if (data == null) return notFound("PDF not found: " + reportId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "inline; filename=\"" + reportId + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
-                .body(new FileSystemResource(f));
+                .body(data);
     }
 
     @GetMapping("/{patientId}/reports/{reportId}/download")
@@ -164,13 +162,13 @@ public class PatientController {
             @PathVariable String patientId,
             @PathVariable String reportId) {
         if (invalidId(patientId)) return bad("Invalid Patient ID format");
-        File f = patientService.getReportPdf(patientId, reportId);
-        if (f == null) return notFound("PDF not found: " + reportId);
+        byte[] data = patientService.getReportPdf(patientId, reportId);
+        if (data == null) return notFound("PDF not found: " + reportId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + reportId + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
-                .body(new FileSystemResource(f));
+                .body(data);
     }
 
     @DeleteMapping("/{patientId}/reports/{reportId}")

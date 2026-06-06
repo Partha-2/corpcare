@@ -1,9 +1,14 @@
 package com.corpcare.pdfanalyzer.service;
 
+import com.corpcare.entity.AnalyzedPatient;
+import com.corpcare.entity.AnalyzedReport;
 import com.corpcare.pdfanalyzer.model.response.PatientReport;
 import com.corpcare.pdfanalyzer.model.response.ReportParameter;
 import com.corpcare.pdfsplit.service.image.ImageExtractorService;
 import com.corpcare.pdfsplit.service.image.ImageValueExtractor;
+import com.corpcare.repository.AnalyzedPatientRepository;
+import com.corpcare.repository.AnalyzedReportRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -11,11 +16,10 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -23,9 +27,9 @@ import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PatientReportService {
 
-    private static final String DIR = "patient-reports/";
     private static final String BASE_URL = "/api/patient";
 
     private static final String[] MEDICAL_KEYWORDS = {
@@ -79,13 +83,12 @@ public class PatientReportService {
     private final ReferenceRangeService referenceRange;
     private final ImageExtractorService imageExtractor;
     private final ImageValueExtractor imageValueExtractor;
+    private final AnalyzedPatientRepository patientRepo;
+    private final AnalyzedReportRepository reportRepo;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public PatientReport analyze(PDDocument doc, String patientId,
                                   String name, String gender, int age) throws IOException {
-        String folder = DIR + patientId + "/";
-        Files.createDirectories(Paths.get(folder));
-
         String[] pages = readAllPages(doc);
         String text = pages[0];
         String srcType = pages[1];
@@ -147,41 +150,144 @@ public class PatientReportService {
         }
 
         long ts = System.currentTimeMillis() % 10000;
-        String id = reportType + "_" + LocalDate.now() + "_" + ts;
-        savePdf(doc, folder + id + ".pdf");
-        saveInfo(folder, patientId, name, gender, age);
+        String reportId = reportType + "_" + LocalDate.now() + "_" + ts;
+        byte[] pdfBytes = toBytes(doc);
 
+        // upsert patient
+        AnalyzedPatient patient = patientRepo.findByPatientId(patientId)
+                .orElseGet(() -> {
+                    AnalyzedPatient p = new AnalyzedPatient();
+                    p.setPatientId(patientId);
+                    return p;
+                });
+        patient.setPatientName(name);
+        patient.setGender(gender);
+        patient.setAge(age);
+        patientRepo.save(patient);
+
+        // save report
+        AnalyzedReport ar = new AnalyzedReport();
+        ar.setReportId(reportId);
+        ar.setPatientId(patientId);
+        ar.setReportType(reportType);
+        ar.setReportDate(LocalDate.now().toString());
+        ar.setSourceType(srcType);
+        ar.setDiagnosis(diagnosis);
+        ar.setParametersJson(mapper.writeValueAsString(params));
+        ar.setPdfData(pdfBytes);
+        ar.setTotalParameters(params.size());
+        ar.setHighCount(high);
+        ar.setLowCount(low);
+        ar.setNormalCount(normal);
+        ar.setUnknownCount(params.size() - high - low - normal);
+        reportRepo.save(ar);
+
+        return toReport(ar, name, gender, age);
+    }
+
+    public List<Map<String, String>> getAllPatients() {
+        List<Map<String, String>> list = new ArrayList<>();
+        for (AnalyzedPatient p : patientRepo.findAll()) {
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("patientId", p.getPatientId());
+            m.put("patientName", p.getPatientName());
+            m.put("gender", p.getGender());
+            m.put("age", String.valueOf(p.getAge()));
+            list.add(m);
+        }
+        return list;
+    }
+
+    public Map<String, String> getPatientInfo(String id) {
+        return patientRepo.findByPatientId(id).map(p -> {
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("patientId", p.getPatientId());
+            m.put("patientName", p.getPatientName());
+            m.put("gender", p.getGender());
+            m.put("age", String.valueOf(p.getAge()));
+            return m;
+        }).orElse(null);
+    }
+
+    public void deletePatient(String id) {
+        reportRepo.deleteByPatientId(id);
+        patientRepo.deleteByPatientId(id);
+    }
+
+    public List<PatientReport> getPatientReports(String id) {
+        List<PatientReport> list = new ArrayList<>();
+        AnalyzedPatient patient = patientRepo.findByPatientId(id).orElse(null);
+        if (patient == null) return list;
+        for (AnalyzedReport ar : reportRepo.findByPatientIdOrderByCreatedAtDesc(id))
+            list.add(toReport(ar, patient.getPatientName(), patient.getGender(), patient.getAge()));
+        return list;
+    }
+
+    public PatientReport getReport(String id, String reportId) {
+        AnalyzedPatient patient = patientRepo.findByPatientId(id).orElse(null);
+        if (patient == null) return null;
+        return reportRepo.findByPatientIdAndReportId(id, reportId)
+                .map(ar -> toReport(ar, patient.getPatientName(), patient.getGender(), patient.getAge()))
+                .orElse(null);
+    }
+
+    public byte[] getReportPdf(String id, String reportId) {
+        return reportRepo.findByPatientIdAndReportId(id, reportId)
+                .map(AnalyzedReport::getPdfData).orElse(null);
+    }
+
+    public void deleteReport(String id, String reportId) {
+        reportRepo.deleteByPatientIdAndReportId(id, reportId);
+    }
+
+    private PatientReport toReport(AnalyzedReport ar, String name, String gender, int age) {
         PatientReport r = new PatientReport();
-        r.setPatientId(patientId);
+        r.setPatientId(ar.getPatientId());
         r.setPatientName(name);
         r.setGender(gender);
         r.setAge(age);
-        r.setReportId(id);
-        r.setReportType(reportType);
-        r.setReportDate(LocalDate.now().toString());
-        r.setSourceType(srcType);
-        r.setDiagnosis(diagnosis);
-        r.setParameters(params);
-        r.setTotalParameters(params.size());
-        r.setHighCount(high);
-        r.setLowCount(low);
-        r.setNormalCount(normal);
-        r.setUnknownCount(params.size() - high - low - normal);
-        r.setJsonFile(id + ".json");
-        r.setPdfFile(id + ".pdf");
-        r.setViewUrl(BASE_URL + "/" + patientId + "/reports/" + id + "/view");
-        r.setDownloadUrl(BASE_URL + "/" + patientId + "/reports/" + id + "/download");
-        r.setDeleteUrl(BASE_URL + "/" + patientId + "/reports/" + id);
-
-        mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(new File(folder + id + ".json"), r);
+        r.setReportId(ar.getReportId());
+        r.setReportType(ar.getReportType());
+        r.setReportDate(ar.getReportDate());
+        r.setSourceType(ar.getSourceType());
+        r.setDiagnosis(ar.getDiagnosis());
+        r.setParameters(parseParams(ar.getParametersJson()));
+        r.setTotalParameters(ar.getTotalParameters());
+        r.setHighCount(ar.getHighCount());
+        r.setLowCount(ar.getLowCount());
+        r.setNormalCount(ar.getNormalCount());
+        r.setUnknownCount(ar.getUnknownCount());
+        r.setJsonFile(ar.getReportId() + ".json");
+        r.setPdfFile(ar.getReportId() + ".pdf");
+        r.setViewUrl(BASE_URL + "/" + ar.getPatientId() + "/reports/" + ar.getReportId() + "/view");
+        r.setDownloadUrl(BASE_URL + "/" + ar.getPatientId() + "/reports/" + ar.getReportId() + "/download");
+        r.setDeleteUrl(BASE_URL + "/" + ar.getPatientId() + "/reports/" + ar.getReportId());
         return r;
     }
+
+    private List<ReportParameter> parseParams(String json) {
+        if (json == null || json.isBlank()) return new ArrayList<>();
+        try {
+            return mapper.readValue(json, new TypeReference<List<ReportParameter>>() {});
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private byte[] toBytes(PDDocument doc) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        PDDocument out = new PDDocument();
+        for (PDPage p : doc.getPages()) out.addPage(p);
+        out.save(bos);
+        out.close();
+        return bos.toByteArray();
+    }
+
+    // ---- validation / extraction (unchanged) ----
 
     private void validatePatientDetails(String text, String reqId,
                                          String reqName, String reqGender, int reqAge) {
         String lower = text.toLowerCase();
-
         String pdfId = findFirst(lower, ID_PATTERNS);
         String pdfName = findName(lower);
         String pdfGender = findFirst(lower, GENDER_PATTERNS);
@@ -190,25 +296,20 @@ public class PatientReportService {
         if (pdfId != null && !pdfId.equals(reqId.trim()))
             throw new IllegalArgumentException(
                     "Patient ID mismatch! PDF has: " + pdfId + " but you entered: " + reqId);
-
         if (pdfName != null) {
             String pn = norm(pdfName);
             String rn = norm(reqName);
             if (!pn.equals(rn))
                 throw new IllegalArgumentException(
                         "Name mismatch! PDF has: " + pdfName.trim().toUpperCase()
-                                + " but you entered: " + reqName.toUpperCase()
-                                + ". Enter exact name from the report");
+                                + " but you entered: " + reqName.toUpperCase());
         }
-
         if (pdfGender != null) {
             String pg = expandGender(pdfGender);
             if (!pg.equals(reqGender.trim().toUpperCase()))
                 throw new IllegalArgumentException(
-                        "Gender mismatch! PDF says: " + pg
-                                + " but you entered: " + reqGender.trim().toUpperCase());
+                        "Gender mismatch! PDF says: " + pg + " but you entered: " + reqGender.trim().toUpperCase());
         }
-
         if (pdfAge != null) {
             try {
                 int pa = Integer.parseInt(pdfAge.trim());
@@ -226,9 +327,7 @@ public class PatientReportService {
             while (m.find()) {
                 String val = m.group(1).trim();
                 val = val.replaceAll("\\s+", " ").trim();
-                if (val.length() >= 3 && val.matches("[a-z][a-z\\s]+")) {
-                    return val;
-                }
+                if (val.length() >= 3 && val.matches("[a-z][a-z\\s]+")) return val;
             }
         }
         return null;
@@ -243,64 +342,7 @@ public class PatientReportService {
     }
 
     private String norm(String s) {
-        return s == null ? ""
-                : s.toLowerCase().trim().replaceAll("\\s+", " ");
-    }
-
-    public List<Map<String, String>> getAllPatients() {
-        List<Map<String, String>> list = new ArrayList<>();
-        File root = new File(DIR);
-        if (!root.exists()) return list;
-        File[] dirs = root.listFiles(File::isDirectory);
-        if (dirs == null) return list;
-        for (File d : dirs) {
-            File f = new File(d, "patient.json");
-            if (f.exists())
-                try { list.add(mapper.readValue(f, Map.class)); }
-                catch (Exception ignored) {}
-        }
-        return list;
-    }
-
-    public Map<String, String> getPatientInfo(String id) throws IOException {
-        File f = new File(DIR + id + "/patient.json");
-        return f.exists() ? mapper.readValue(f, Map.class) : null;
-    }
-
-    public void deletePatient(String id) {
-        File dir = new File(DIR + id + "/");
-        if (!dir.exists()) return;
-        File[] files = dir.listFiles();
-        if (files != null) for (File f : files) f.delete();
-        dir.delete();
-    }
-
-    public List<PatientReport> getPatientReports(String id) throws IOException {
-        List<PatientReport> list = new ArrayList<>();
-        File dir = new File(DIR + id + "/");
-        if (!dir.exists()) return list;
-        File[] files = dir.listFiles();
-        if (files == null) return list;
-        for (File f : files)
-            if (f.getName().endsWith(".json") && !f.getName().equals("patient.json"))
-                try { list.add(mapper.readValue(f, PatientReport.class)); }
-                catch (Exception ignored) {}
-        return list;
-    }
-
-    public PatientReport getReport(String id, String reportId) throws IOException {
-        File f = new File(DIR + id + "/" + reportId + ".json");
-        return f.exists() ? mapper.readValue(f, PatientReport.class) : null;
-    }
-
-    public File getReportPdf(String id, String reportId) {
-        File f = new File(DIR + id + "/" + reportId + ".pdf");
-        return f.exists() ? f : null;
-    }
-
-    public void deleteReport(String id, String reportId) {
-        new File(DIR + id + "/" + reportId + ".json").delete();
-        new File(DIR + id + "/" + reportId + ".pdf").delete();
+        return s == null ? "" : s.toLowerCase().trim().replaceAll("\\s+", " ");
     }
 
     private String[] readAllPages(PDDocument doc) throws IOException {
@@ -340,23 +382,5 @@ public class PatientReportService {
             }
         }
         return null;
-    }
-
-    private void savePdf(PDDocument doc, String path) throws IOException {
-        PDDocument out = new PDDocument();
-        for (PDPage p : doc.getPages()) out.addPage(p);
-        out.save(path);
-        out.close();
-    }
-
-    private void saveInfo(String folder, String id,
-                           String name, String gender, int age) throws IOException {
-        Map<String, String> info = new LinkedHashMap<>();
-        info.put("patientId", id);
-        info.put("patientName", name);
-        info.put("gender", gender);
-        info.put("age", String.valueOf(age));
-        mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(new File(folder + "patient.json"), info);
     }
 }
