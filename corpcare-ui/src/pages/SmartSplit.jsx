@@ -37,10 +37,7 @@ export default function SmartSplit() {
     }
   }
 
-  const getFileUrl = (url) => {
-    if (!url) return '#'
-    return url.startsWith('http') ? url : `${baseURL}/pdf/${url.split('/').pop()}`
-  }
+  const getFileUrl = (url) => url || '#'
 
   return (
     <div className="landing">

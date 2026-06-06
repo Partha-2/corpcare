@@ -108,9 +108,9 @@ public class SmartPdfSplitterService {
         out.close();
 
         result.setFileName(fileName);
-        result.setDownloadUrl(BASE_URL + "/download/" + fileName);
-        result.setViewUrl(BASE_URL + "/view/" + fileName);
-        result.setDeleteUrl(BASE_URL + "/delete/" + fileName);
+        result.setDownloadUrl(BASE_URL + "/" + fileName + "/download");
+        result.setViewUrl(BASE_URL + "/" + fileName + "/view");
+        result.setDeleteUrl(BASE_URL + "/" + fileName);
         return result;
     }
 
@@ -136,9 +136,9 @@ public class SmartPdfSplitterService {
             r.setFound(ok);
             r.setFileName(ok ? f.getName() : f.getName() + " (corrupted)");
             if (ok) {
-                r.setDownloadUrl(BASE_URL + "/download/" + f.getName());
-                r.setViewUrl(BASE_URL + "/view/" + f.getName());
-                r.setDeleteUrl(BASE_URL + "/delete/" + f.getName());
+                r.setDownloadUrl(BASE_URL + "/" + f.getName() + "/download");
+                r.setViewUrl(BASE_URL + "/" + f.getName() + "/view");
+                r.setDeleteUrl(BASE_URL + "/" + f.getName());
             }
             files.add(r);
         }

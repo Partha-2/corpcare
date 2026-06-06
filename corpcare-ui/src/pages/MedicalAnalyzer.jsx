@@ -21,9 +21,23 @@ export default function MedicalAnalyzer() {
 
   const baseURL = import.meta.env.VITE_API_URL || '/api'
 
+  const validate = () => {
+    if (!patientId.trim()) return 'Patient ID is required'
+    if (!/^[0-9]{3,10}$/.test(patientId.trim())) return 'Invalid Patient ID — numbers only, 3-10 digits'
+    if (!name.trim()) return 'Patient name is required'
+    if (name.trim().length < 3) return 'Name too short — minimum 3 characters'
+    if (name.trim().length > 60) return 'Name too long — maximum 60 characters'
+    if (!/^[a-zA-Z\s.'-]+$/.test(name.trim())) return 'Invalid name — use letters and spaces only'
+    const a = parseInt(age, 10)
+    if (!age || isNaN(a) || a < 1 || a > 120) return 'Invalid age — must be between 1 and 120'
+    return null
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!file) return
+    if (!file) return setError('Please select a PDF file')
+    const err = validate()
+    if (err) return setError(err)
     setLoading(true)
     setError('')
     setResult(null)
@@ -31,8 +45,8 @@ export default function MedicalAnalyzer() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('patientId', patientId)
-      formData.append('name', name)
+      formData.append('patientId', patientId.trim())
+      formData.append('name', name.trim())
       formData.append('gender', gender)
       formData.append('age', age)
       const r = await axios.post(`${baseURL}/patient/analyze`, formData, {
@@ -45,6 +59,20 @@ export default function MedicalAnalyzer() {
       setLoading(false)
     }
   }
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this report?')) return
+    try {
+      await axios.delete(toAbs(result.deleteUrl))
+      setResult(null)
+      setFile(null)
+      alert('Report deleted successfully')
+    } catch (err) {
+      alert('Delete failed: ' + (err.response?.data?.message || err.message))
+    }
+  }
+
+  const toAbs = (url) => url && !url.startsWith('http') ? `${baseURL}${url.replace('/api', '')}` : url
 
   return (
     <div className="landing">
@@ -76,11 +104,11 @@ export default function MedicalAnalyzer() {
 
               <div style={{ display: 'flex', gap: 12 }}>
                 <input type="text" placeholder="Patient ID (e.g. 68382)" value={patientId}
-                  onChange={e => setPatientId(e.target.value)}
+                  onChange={e => setPatientId(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
                   style={{ flex: 1, padding: '10px 14px', border: '1px solid var(--border)',
                     borderRadius: 8, fontSize: 14 }} required />
                 <input type="text" placeholder="Full Name" value={name}
-                  onChange={e => setName(e.target.value)}
+                  onChange={e => setName(e.target.value.replace(/[^a-zA-Z\s.'-]/g, '').slice(0, 60))}
                   style={{ flex: 2, padding: '10px 14px', border: '1px solid var(--border)',
                     borderRadius: 8, fontSize: 14 }} required />
               </div>
@@ -175,18 +203,24 @@ export default function MedicalAnalyzer() {
             </table>
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {result.viewUrl && (
-              <a href={result.viewUrl} target="_blank" rel="noreferrer"
+              <a href={toAbs(result.viewUrl)} target="_blank" rel="noreferrer"
                 className="btn" style={{ padding: '8px 24px' }}>
                 👁️ View PDF
               </a>
             )}
             {result.downloadUrl && (
-              <a href={result.downloadUrl} target="_blank" rel="noreferrer"
+              <a href={toAbs(result.downloadUrl)} target="_blank" rel="noreferrer"
                 className="btn" style={{ padding: '8px 24px', background: '#2563eb', color: '#fff', border: 'none' }}>
                 ⬇️ Download PDF
               </a>
+            )}
+            {result.deleteUrl && (
+              <button onClick={handleDelete}
+                className="btn" style={{ padding: '8px 24px', background: '#dc2626', color: '#fff', border: 'none' }}>
+                🗑️ Delete Report
+              </button>
             )}
             <button className="btn" style={{ padding: '8px 24px' }}
               onClick={() => { setFile(null); setResult(null); setPatientId(''); setName(''); setAge('') }}>
