@@ -4,10 +4,14 @@ import com.corpcare.pdfsplit.model.response.AnalysisResult;
 import com.corpcare.pdfsplit.model.response.CombinedResult;
 import com.corpcare.pdfsplit.model.response.SplitResult;
 import com.corpcare.pdfsplit.service.image.ImageAnalyzerService;
+import com.corpcare.pdfsplit.service.llm.LlmClassifierService;
+import com.corpcare.pdfsplit.service.llm.LlmClassifierService.LlmResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +25,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class SmartPdfSplitterService {
 
+    private static final Logger log = LoggerFactory.getLogger(SmartPdfSplitterService.class);
+
     private static final String OUTPUT_DIR = "split-output/";
     private static final String BASE_URL = "/api/pdf";
 
@@ -28,6 +34,7 @@ public class SmartPdfSplitterService {
     private final PdfTextExtractor extractor;
     private final PdfCategoryDetector detector;
     private final ImageAnalyzerService imageAnalyzer;
+    private final LlmClassifierService llmClassifier;
 
     public CombinedResult process(MultipartFile file) throws IOException {
         Files.createDirectories(Paths.get(OUTPUT_DIR));
@@ -48,7 +55,20 @@ public class SmartPdfSplitterService {
             if (text.isEmpty()) {
                 imagePages.add(i);
             } else {
-                String category = detector.toFinal(detector.detectOne(text));
+                String rawCategory = detector.detectOne(text);
+                String confidence = detector.confidence(text, rawCategory);
+                if ("LOW".equals(confidence) && rawCategory != null && llmClassifier.isAvailable()) {
+                    try {
+                        LlmResult llmResult = llmClassifier.classifyText(text);
+                        if (llmResult != null && !"UNKNOWN".equals(llmResult.getType())) {
+                            log.info("LLM reclassified page {} from {} to {}", i + 1, rawCategory, llmResult.getType());
+                            rawCategory = llmResult.getType().toLowerCase();
+                        }
+                    } catch (Exception e) {
+                        log.warn("LLM reclassification failed for page {}: {}", i + 1, e.getMessage());
+                    }
+                }
+                String category = detector.toFinal(rawCategory);
                 buckets.get(category).add(i);
             }
         }

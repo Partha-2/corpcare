@@ -1,10 +1,14 @@
 package com.corpcare.pdfsplit.service.image;
 
 import com.corpcare.pdfsplit.model.response.AnalysisResult;
+import com.corpcare.pdfsplit.service.llm.LlmClassifierService;
+import com.corpcare.pdfsplit.service.llm.LlmClassifierService.LlmResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -18,12 +22,14 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ImageAnalyzerService {
 
+    private static final Logger log = LoggerFactory.getLogger(ImageAnalyzerService.class);
     private static final String OUTPUT_DIR = "analyze-output/";
     private static final String BASE_URL = "/api/pdf";
 
     private final ImageExtractorService extractor;
     private final ImageTypeDetectorService typeDetector;
     private final ImageValueExtractor valueExtractor;
+    private final LlmClassifierService llmClassifier;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public List<AnalysisResult> analyze(PDFRenderer renderer, PDDocument document,
@@ -38,6 +44,22 @@ public class ImageAnalyzerService {
             String type = typeDetector.detect(text);
             String confidence = typeDetector.confidence(text, type);
             Map<String, String> values = valueExtractor.extract(text, type);
+
+            if (("UNKNOWN".equals(type) || "LOW".equals(confidence)) && llmClassifier.isAvailable()) {
+                try {
+                    LlmResult llmResult = llmClassifier.classifyImage(text);
+                    if (llmResult != null && !"UNKNOWN".equals(llmResult.getType())) {
+                        log.info("LLM reclassified image page {} from {} to {}", page + 1, type, llmResult.getType());
+                        type = llmResult.getType();
+                        confidence = llmResult.getConfidence();
+                        if (llmResult.getValues() != null && !llmResult.getValues().isEmpty()) {
+                            values.putAll(llmResult.getValues());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("LLM reclassification failed for image page {}: {}", page + 1, e.getMessage());
+                }
+            }
 
             String baseName = type + "_page" + (page + 1) + "_" + LocalDate.now();
             String jsonFile = saveJson(baseName, type, page, confidence, "TESSERACT", values);
